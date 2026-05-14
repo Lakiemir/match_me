@@ -1,4 +1,4 @@
-# 💜 MatchMe Hobbies
+# 🎳 MatchMe Hobbies
 
 ### A modern full-stack social matching platform built around hobbies, interests, preferences, and real-time connections
 
