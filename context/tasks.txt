@@ -1,0 +1,316 @@
+ 
+Create the UI basic pages
+1 Project setup
+Frontend
+#1
+opened
+6 hours ago
+by
+jorgeguzmanrojas
+Matchme-Hobbies Kanban Board
+ 
+Java setup
+1 Project setup
+Backend
+Database
+#2
+opened
+6 hours ago
+by
+jorgeguzmanrojas
+Matchme-Hobbies Kanban Board
+ 
+PostgreSQL setup
+1 Project setup
+Backend
+Database
+#3
+opened
+5 hours ago
+by
+jorgeguzmanrojas
+Matchme-Hobbies Kanban Board
+ 
+Register + Login pages
+2 Login
+Frontend
+#4
+opened
+5 hours ago
+by
+jorgeguzmanrojas
+Matchme-Hobbies Kanban Board
+ 
+bcrypt + JWT register & login
+2 Login
+Backend
+#5
+opened
+5 hours ago
+by
+jorgeguzmanrojas
+Matchme-Hobbies Kanban Board
+ 
+Users table
+2 Login
+Database
+#6
+opened
+5 hours ago
+by
+jorgeguzmanrojas
+Matchme-Hobbies Kanban Board
+ 
+Profile FE logic
+3 Profile
+Frontend
+#7
+opened
+5 hours ago
+by
+jorgeguzmanrojas
+Matchme-Hobbies Kanban Board
+ 
+Save profile
+3 Profile
+Backend
+#8
+opened
+5 hours ago
+by
+jorgeguzmanrojas
+Matchme-Hobbies Kanban Board
+ 
+Profiles table
+3 Profile
+Database
+#9
+opened
+5 hours ago
+by
+jorgeguzmanrojas
+Matchme-Hobbies Kanban Board
+ 
+bio + preferences FE logic
+4 Bio + Preferences
+Frontend
+#10
+opened
+5 hours ago
+by
+jorgeguzmanrojas
+Matchme-Hobbies Kanban Board
+ 
+Save bio + preferences
+4 Bio + Preferences
+Backend
+Database
+#11
+opened
+5 hours ago
+by
+jorgeguzmanrojas
+Matchme-Hobbies Kanban Board
+ 
+Seed
+5 Seed
+Backend
+Database
+#12
+opened
+5 hours ago
+by
+jorgeguzmanrojas
+Matchme-Hobbies Kanban Board
+ 
+Recommendations FE logic
+6 Recommendations
+Frontend
+#13
+opened
+5 hours ago
+by
+jorgeguzmanrojas
+Matchme-Hobbies Kanban Board
+ 
+Recommendations matching-score
+6 Recommendations
+Backend
+Database
+#14
+opened
+5 hours ago
+by
+jorgeguzmanrojas
+Matchme-Hobbies Kanban Board
+ 
+Ensure FE privacy logic
+7 Privacy
+Frontend
+#15
+opened
+5 hours ago
+by
+jorgeguzmanrojas
+Matchme-Hobbies Kanban Board
+ 
+Ensure BE privacy
+7 Privacy
+Backend
+Database
+#16
+opened
+5 hours ago
+by
+jorgeguzmanrojas
+Matchme-Hobbies Kanban Board
+ 
+Endpoints usage FE logic
+8 Endpoints
+Frontend
+#17
+opened
+5 hours ago
+by
+jorgeguzmanrojas
+Matchme-Hobbies Kanban Board
+ 
+Create the endpoints/routes
+8 Endpoints
+Backend
+Database
+#18
+opened
+5 hours ago
+by
+jorgeguzmanrojas
+Matchme-Hobbies Kanban Board
+ 
+Connection requests FE logic
+9 Connection requests
+Frontend
+#19
+opened
+5 hours ago
+by
+jorgeguzmanrojas
+Matchme-Hobbies Kanban Board
+ 
+Connection requests BE handling
+9 Connection requests
+Backend
+Database
+#20
+opened
+5 hours ago
+by
+jorgeguzmanrojas
+Matchme-Hobbies Kanban Board
+
+
+
+ 
+Chat FE logic
+11 Chat list + history
+Frontend
+#21
+opened
+5 hours ago
+by
+jorgeguzmanrojas
+Matchme-Hobbies Kanban Board
+ 
+Connections + Disconnect FE logic
+10 Connections + Disconnect
+Frontend
+#22
+opened
+5 hours ago
+by
+jorgeguzmanrojas
+Matchme-Hobbies Kanban Board
+ 
+Connections + Disconnect BE handling
+10 Connections + Disconnect
+Backend
+Database
+#23
+opened
+5 hours ago
+by
+jorgeguzmanrojas
+Matchme-Hobbies Kanban Board
+ 
+Chat BE handling
+11 Chat list + history
+Backend
+Database
+#24
+opened
+5 hours ago
+by
+jorgeguzmanrojas
+Matchme-Hobbies Kanban Board
+ 
+Chat - real-time FE logic
+12 Chat real-time + unread
+Frontend
+#25
+opened
+5 hours ago
+by
+jorgeguzmanrojas
+Matchme-Hobbies Kanban Board
+ 
+Chat - real-time BE handling
+12 Chat real-time + unread
+Backend
+Database
+#26
+opened
+5 hours ago
+by
+jorgeguzmanrojas
+Matchme-Hobbies Kanban Board
+ 
+Bonus: online/offline FE logic
+13 Bonus: online/offline typing
+Frontend
+#27
+opened
+5 hours ago
+by
+jorgeguzmanrojas
+Matchme-Hobbies Kanban Board
+ 
+Bonus: online/offline BE handling
+13 Bonus: online/offline typing
+Backend
+Database
+#28
+opened
+5 hours ago
+by
+jorgeguzmanrojas
+Matchme-Hobbies Kanban Board
+ 
+Bonus: GPS/radius location FE logic
+14 Bonus: GPS/radius location
+Frontend
+#29
+opened
+5 hours ago
+by
+jorgeguzmanrojas
+Matchme-Hobbies Kanban Board
+ 
+Bonus: GPE/radius location BE handling
+14 Bonus: GPS/radius location
+Backend
+Database
+#30
+opened
+5 hours ago
+by
+jorgeguzmanrojas
+Matchme-Hobbies Kanban Board
