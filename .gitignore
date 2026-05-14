@@ -1,6 +1,5 @@
 # PROJECT DOCUMENTATION / CONTEXT
 
-# Custom
 project-description.txt
 project-tests.txt
 style-example-cont.png
@@ -17,8 +16,6 @@ todo*.md
 .DS_Store
 Thumbs.db
 Desktop.ini
-
-# macOS
 .AppleDouble
 .LSOverride
 
@@ -66,57 +63,78 @@ pnpm-debug.log*
 # FRONTEND — REACT / TYPESCRIPT / VITE
 
 node_modules/
+client/node_modules/
 
 dist/
+client/dist/
+
 build/
+client/build/
+
 coverage/
+client/coverage/
 
 .vite/
+client/.vite/
 
 *.tsbuildinfo
 
-# Optional caches
 .eslintcache
 .stylelintcache
 
-# Vite generated asset
 vite.svg
 
 
 # BACKEND — JAVA / SPRING BOOT / GRADLE
 
 .gradle/
+server/.gradle/
+
+target/
+server/target/
+
+out/
+server/out/
+
+bin/
+server/bin/
 
 build/
-target/
-out/
-bin/
+server/build/
 
-# Java compiled files
 *.class
 *.jar
 *.war
 *.ear
 
-# JVM crash logs
 hs_err_pid*
 
-# DATABASES
+
+# DATABASE
 
 *.sqlite
 *.sqlite3
 *.db
 
-# PostgreSQL local dumps
-*.sql
 *.dump
+
+# Keep normal SQL files trackable for schema, migrations and seed scripts.
+# Do not ignore *.sql globally.
+
+docker-data/
+database/local-data/
 
 
 # FILE UPLOADS / USER CONTENT
 
 uploads/
+server/uploads/
+
 storage/
+server/storage/
+
 media/
+server/media/
 
 
 # TEMP / CACHE
@@ -125,22 +143,17 @@ tmp/
 temp/
 .cache/
 
+server/tmp/
+server/temp/
+
 
 # TESTING
-
-coverage/
 
 playwright-report/
 test-results/
 
-# Cypress
 cypress/videos/
 cypress/screenshots/
-
-
-# DOCKER
-
-docker-data/
 
 
 # PACKAGE MANAGERS
@@ -161,9 +174,9 @@ docker-data/
 .aider*
 .continue/
 
-# Codex / OpenAI tooling
 .codex/
 .codex-cache/
+
 
 # MISC
 
