@@ -50,6 +50,18 @@ MatchMe Hobbies helps people discover compatible connections based on shared int
 
 ---
 
+## 🏗️ Architecture Decisions
+
+MatchMe Hobbies uses a monorepo architecture with separate `client/`, `server/`, and `database/` folders to keep frontend, backend, and database responsibilities clearly organized while maintaining a unified development workflow.
+
+The backend follows a layered modular monolith architecture using Java Spring Boot, where features such as authentication, profiles, recommendations, connections, and chat are implemented as internal modules inside a single backend application.
+
+This approach was selected because the project features are tightly connected, share the same PostgreSQL data model and security rules, and require centralized JWT authentication, privacy handling, recommendation logic, and realtime communication through WebSocket/STOMP.
+
+More complex architectures such as microservices, clean architecture, hexagonal architecture, CQRS, or event-driven systems were evaluated but not selected because they would add unnecessary operational and abstraction complexity for the current product scope and requirements.
+
+---
+
 ## 🗺️ Main Routes
 
 | Route | Description |
@@ -80,9 +92,16 @@ cd matchme-web
 
 ## 💻 Frontend
 
+Frontend source code is located in:
+
+```txt
+client/
+```
+
 Install dependencies:
 
 ```bash
+cd client
 npm install
 ```
 
@@ -102,9 +121,16 @@ http://localhost:5173
 
 ## ☕ Backend
 
+Backend source code is located in:
+
+```txt
+server/
+```
+
 Run the backend server:
 
 ```bash
+cd server
 ./gradlew bootRun
 ```
 
@@ -117,6 +143,12 @@ http://localhost:8080
 ---
 
 ## 🐘 PostgreSQL
+
+Database-related scripts and setup are located in:
+
+```txt
+database/
+```
 
 Create a PostgreSQL database:
 
@@ -225,6 +257,7 @@ The project includes a seed/reload system for testing and review.
 Example:
 
 ```bash
+cd server
 ./gradlew seedUsers
 ```
 
@@ -256,4 +289,3 @@ The interface is optimized for:
 | ⌨️ Typing indicator | Live typing feedback during conversations |
 | 📍 GPS radius filtering | Browser geolocation + distance-based recommendations |
 | 🧠 Advanced matching | Enhanced recommendation scoring and weighting |
-
