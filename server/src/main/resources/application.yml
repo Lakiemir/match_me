@@ -27,3 +27,10 @@ spring:
 
     # Keep database access inside service/repository flow.
     open-in-view: false
+
+app:
+  jwt:
+    # Secret used to sign JWT tokens; env var should override this in real deployments.
+    secret: ${JWT_SECRET:q1w2e3r4t5y6u7i8o9p0q1w2e3r4t5y6}
+    # 1 hour token lifetime
+    expiration-ms: 3600000

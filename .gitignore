@@ -1,5 +1,6 @@
 # PROJECT DOCUMENTATION / CONTEXT
 
+instructions.txt
 project-description.txt
 project-tests.txt
 style-example-cont.png
@@ -47,6 +48,13 @@ Desktop.ini
 *.crt
 *.p12
 *.pfx
+
+
+# POSTMAN
+
+.postman/config.json
+postman/globals/workspace.postman_globals.json
+
 
 
 # LOGS
