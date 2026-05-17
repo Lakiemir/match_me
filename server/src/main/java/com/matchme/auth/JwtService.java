@@ -38,4 +38,16 @@ public class JwtService {
                 .signWith(secretKey)
                 .compact();
     }
+
+    public Long getUserIdFromToken(String token) {
+        // Reads the user id from a valid signed JWT.
+        String userId = Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getSubject();
+
+        return Long.parseLong(userId);
+    }
 }

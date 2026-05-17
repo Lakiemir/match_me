@@ -6,6 +6,7 @@ project-tests.txt
 style-example-cont.png
 style-example.png
 info*.*
+dev-*.sh
 notes*.*
 scratch*.*
 draft*.*

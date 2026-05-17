@@ -568,6 +568,100 @@ select:focus {
   text-transform: uppercase;
 }
 
+
+/* =========================
+   PROFILE FORM
+========================= */
+
+.profile-form {
+  max-width: 720px;
+}
+
+.profile-avatar {
+  width: 88px;
+  height: 88px;
+
+  border-radius: 50%;
+  border: 1px solid var(--border);
+
+  background: var(--panel);
+
+  display: grid;
+  place-items: center;
+
+  overflow: hidden;
+  flex: 0 0 auto;
+}
+
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-avatar span {
+  font-size: 2.4rem;
+}
+
+.profile-summary {
+  display: grid;
+  gap: 6px;
+}
+
+.profile-summary h3,
+.profile-summary p {
+  margin: 0;
+}
+
+.profile-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.status-complete,
+.status-incomplete {
+  width: fit-content;
+
+  border-radius: 999px;
+
+  padding: 4px 10px;
+
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.status-complete {
+  color: #7ee787;
+  background: rgba(46, 160, 67, 0.18);
+  border: 1px solid rgba(46, 160, 67, 0.45);
+}
+
+.status-incomplete {
+  color: #e3b341;
+  background: rgba(187, 128, 9, 0.18);
+  border: 1px solid rgba(187, 128, 9, 0.45);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+@media (max-width: 560px) {
+  .profile-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .profile-actions .button {
+    width: 100%;
+  }
+}
+
+
+
+
 /* =========================
    RESPONSIVE
 ========================= */
@@ -631,3 +725,5 @@ select:focus {
     font-size: 1.6rem;
   }
 }
+
+
