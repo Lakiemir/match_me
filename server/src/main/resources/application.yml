@@ -1,0 +1,29 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: matchme
+
+  datasource:
+    # PostgreSQL database connection - format:
+    # jdbc:postgresql://HOST:PORT/DATABASE
+    url: jdbc:postgresql://127.0.0.1:5433/matchme
+
+    username: matchme_user
+    password: mp01
+
+    # Java driver used to connect to PostgreSQL
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      # Spring Boot will NOT auto-create tables
+      # Tables will be created later in database tasks
+      ddl-auto: none
+
+    # Shows SQL queries in terminal
+    show-sql: true
+
+    # Keep database access inside service/repository flow.
+    open-in-view: false
