@@ -1,31 +1,312 @@
-const bioPoints = [
-  "Hobbies",
-  "Location",
-  "Availability",
-  "Social style",
-  "Activity preference",
-  "Looking for",
+import { useEffect, useMemo, useState } from "react";
+
+type Hobby = {
+  id: number;
+  name: string;
+};
+
+type Bio = {
+  userId: number;
+  maxDistanceKm: number;
+  availability: string;
+  activityPreference: string;
+  lookingFor: string;
+  hobbies: Hobby[];
+  complete: boolean;
+};
+
+const API_BASE_URL = "http://localhost:8080";
+
+const emptyBio: Bio = {
+  userId: 0,
+  maxDistanceKm: 20,
+  availability: "",
+  activityPreference: "",
+  lookingFor: "",
+  hobbies: [],
+  complete: false,
+};
+
+const availabilityOptions = [
+  { value: "", label: "Choose availability" },
+  { value: "weeknights", label: "Weeknights" },
+  { value: "weekends", label: "Weekends" },
+  { value: "flexible", label: "Flexible" },
+];
+
+const activityOptions = [
+  { value: "", label: "Choose activity preference" },
+  { value: "outdoor", label: "Outdoor" },
+  { value: "indoor", label: "Indoor" },
+  { value: "both", label: "Both" },
+];
+
+const lookingForOptions = [
+  { value: "", label: "Choose what you are looking for" },
+  { value: "friendship", label: "Friendship" },
+  { value: "date", label: "Date" },
+  { value: "activity_partner", label: "Activity partner" },
+  { value: "professional", label: "Professional" },
 ];
 
 export function BioPage() {
+  const [bio, setBio] = useState<Bio>(emptyBio);
+  const [hobbies, setHobbies] = useState<Hobby[]>([]);
+  const [selectedHobbyIds, setSelectedHobbyIds] = useState<number[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    async function loadBioPage() {
+      setIsLoading(true);
+      setMessage("");
+
+      try {
+        const hobbiesResponse = await fetch(`${API_BASE_URL}/api/hobbies`);
+
+        if (!hobbiesResponse.ok) {
+          throw new Error("Could not load hobbies.");
+        }
+
+        const hobbiesData = (await hobbiesResponse.json()) as Hobby[];
+        setHobbies(hobbiesData);
+      } catch {
+        setMessage("Could not load hobbies.");
+        setIsLoading(false);
+        return;
+      }
+
+      if (!token) {
+        setMessage("Log in first to save your bio.");
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const bioResponse = await fetch(`${API_BASE_URL}/api/me/bio`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (bioResponse.status === 401) {
+          localStorage.removeItem("token");
+          setMessage("Your login expired. Log in again to save your bio.");
+          setIsLoading(false);
+          return;
+        }
+
+        if (!bioResponse.ok) {
+          throw new Error("Could not load bio.");
+        }
+
+        const bioData = (await bioResponse.json()) as Bio;
+        setBio(bioData);
+        setSelectedHobbyIds(bioData.hobbies.map((hobby) => hobby.id));
+      } catch {
+        setMessage("Could not load your saved bio.");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    // Hobbies are public options, but saved bio needs a valid login token.
+    void loadBioPage();
+  }, [token]);
+
+  const selectedCount = selectedHobbyIds.length;
+
+  const selectedHobbiesText = useMemo(() => {
+    if (selectedCount === 0) {
+      return "Choose at least 3 hobbies.";
+    }
+
+    return `${selectedCount} hobbies selected.`;
+  }, [selectedCount]);
+
+  function updateField(field: keyof Bio, value: string | number) {
+    setBio((currentBio) => ({
+      ...currentBio,
+      [field]: value,
+    }));
+  }
+
+  function toggleHobby(hobbyId: number) {
+    setSelectedHobbyIds((currentIds) => {
+      if (currentIds.includes(hobbyId)) {
+        return currentIds.filter((id) => id !== hobbyId);
+      }
+
+      return [...currentIds, hobbyId];
+    });
+  }
+
+  async function saveBio(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const currentToken = localStorage.getItem("token");
+
+    if (!currentToken) {
+      setMessage("Log in first to save your bio.");
+      return;
+    }
+
+    setIsSaving(true);
+    setMessage("");
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/me/bio`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${currentToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          maxDistanceKm: bio.maxDistanceKm,
+          availability: bio.availability,
+          activityPreference: bio.activityPreference,
+          lookingFor: bio.lookingFor,
+          hobbyIds: selectedHobbyIds,
+        }),
+      });
+
+      if (response.status === 401) {
+        localStorage.removeItem("token");
+        setMessage("Your login expired. Log in again to save your bio.");
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error("Could not save bio.");
+      }
+
+      const data = (await response.json()) as Bio;
+      setBio(data);
+      setSelectedHobbyIds(data.hobbies.map((hobby) => hobby.id));
+      setMessage(data.complete ? "Bio saved." : "Bio saved, but it is not complete yet.");
+    } catch {
+      setMessage("Could not save bio.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="page-stack">
+        <p className="muted-text">Loading bio...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="page-stack">
       <div>
         <p className="eyebrow">Bio & preferences</p>
-        <h2>Tell MatchMe what matters to you.</h2>
+        <h2>My matching bio</h2>
         <p className="muted-text">
-          Based on your preferences, you will get recommendations to connect.
+          Choose hobbies and preferences so MatchMe can recommend better people.
         </p>
       </div>
 
-      <section className="tag-grid">
-        {bioPoints.map((point) => (
-          <article className="tag-card" key={point}>
-            <span>✓</span>
-            <p>{point}</p>
-          </article>
-        ))}
+      <section className="bio-summary">
+        <div>
+          <h3>{bio.complete ? "Complete bio" : "Incomplete bio"}</h3>
+          <p className="muted-text">{selectedHobbiesText}</p>
+        </div>
+
+        <span className={bio.complete ? "status-complete" : "status-incomplete"}>
+          {bio.complete ? "Ready for matching" : "Needs more info"}
+        </span>
       </section>
+
+      <form className="form-card bio-form" onSubmit={saveBio}>
+        <label>
+          Maximum distance in km
+          <input
+            type="number"
+            min={1}
+            max={500}
+            value={bio.maxDistanceKm}
+            onChange={(event) => updateField("maxDistanceKm", Number(event.target.value))}
+          />
+        </label>
+
+        <label>
+          Availability
+          <select
+            value={bio.availability}
+            onChange={(event) => updateField("availability", event.target.value)}
+          >
+            {availabilityOptions.map((option) => (
+              <option value={option.value} key={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label>
+          Activity preference
+          <select
+            value={bio.activityPreference}
+            onChange={(event) => updateField("activityPreference", event.target.value)}
+          >
+            {activityOptions.map((option) => (
+              <option value={option.value} key={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label>
+          Looking for
+          <select
+            value={bio.lookingFor}
+            onChange={(event) => updateField("lookingFor", event.target.value)}
+          >
+            {lookingForOptions.map((option) => (
+              <option value={option.value} key={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <div className="bio-hobbies">
+          <div>
+            <h3>Hobbies</h3>
+            <p className="muted-text">Choose at least 3 hobbies.</p>
+          </div>
+
+          <div className="hobby-grid">
+            {hobbies.map((hobby) => {
+              const isSelected = selectedHobbyIds.includes(hobby.id);
+
+              return (
+                <button
+                  className={isSelected ? "hobby-chip hobby-chip-selected" : "hobby-chip"}
+                  type="button"
+                  key={hobby.id}
+                  onClick={() => toggleHobby(hobby.id)}
+                >
+                  {hobby.name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <button className="button button-primary" type="submit" disabled={isSaving}>
+          {isSaving ? "Saving..." : "Save bio"}
+        </button>
+
+        {message && <p className="muted-text">{message}</p>}
+      </form>
     </div>
   );
 }

@@ -294,7 +294,7 @@ p {
   border-bottom: 0;
 }
 
-.board-row > div {
+.board-row>div {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -661,6 +661,115 @@ button:disabled {
 
 
 
+/* =========================
+   BIO FORM
+========================= */
+
+.bio-form {
+  max-width: 760px;
+}
+
+.bio-summary {
+  max-width: 760px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+
+  background: var(--panel-dark);
+
+  border: 1px solid var(--border);
+  border-radius: 8px;
+
+  padding: 20px;
+}
+
+.bio-summary h3,
+.bio-summary p {
+  margin: 0;
+}
+
+.bio-hobbies {
+  display: grid;
+  gap: 12px;
+}
+
+.bio-hobbies h3,
+.bio-hobbies p {
+  margin: 0;
+}
+
+.hobby-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.hobby-chip {
+  min-height: 48px;
+
+  color: var(--text);
+  background: #0d1117;
+
+  border: 1px solid var(--border);
+  border-radius: 8px;
+
+  padding: 10px 12px;
+
+  cursor: pointer;
+  text-align: left;
+  font-weight: 700;
+}
+
+.hobby-chip:hover {
+  border-color: var(--blue);
+}
+
+.hobby-chip-selected {
+  color: #04160a;
+  background: var(--green);
+  border-color: var(--green);
+}
+
+.status-complete,
+.status-incomplete {
+  display: inline-flex;
+  align-items: center;
+
+  border-radius: 999px;
+
+  padding: 5px 10px;
+
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.status-complete {
+  color: #7ee787;
+  background: rgba(46, 160, 67, 0.18);
+  border: 1px solid rgba(46, 160, 67, 0.45);
+}
+
+.status-incomplete {
+  color: #e3b341;
+  background: rgba(187, 128, 9, 0.18);
+  border: 1px solid rgba(187, 128, 9, 0.45);
+}
+
+@media (max-width: 760px) {
+  .hobby-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bio-summary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+
+
 
 /* =========================
    RESPONSIVE
@@ -695,6 +804,7 @@ button:disabled {
 }
 
 @media (max-width: 560px) {
+
   .sidebar,
   .topbar,
   .page-panel {
@@ -712,7 +822,7 @@ button:disabled {
   .card-actions,
   .chat-input-row,
   .board-row,
-  .board-row > div {
+  .board-row>div {
     flex-direction: column;
     align-items: flex-start;
   }
@@ -725,5 +835,3 @@ button:disabled {
     font-size: 1.6rem;
   }
 }
-
-
