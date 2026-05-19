@@ -50,6 +50,15 @@ CREATE TABLE IF NOT EXISTS user_hobbies (
     PRIMARY KEY (user_id, hobby_id)
 );
 
+-- Stores recommendations the user does not want to see again
+CREATE TABLE IF NOT EXISTS dismissed_recommendations (
+    dismisser_user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    dismissed_user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    dismissed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (dismisser_user_id, dismissed_user_id),
+    CONSTRAINT dismissed_recommendations_not_self_check CHECK (dismisser_user_id <> dismissed_user_id)
+);
+
 -- Seed the fixed hobby list used by the bio form
 INSERT INTO hobbies (id, name) VALUES
     (1, 'Sauna & cold plunge'),

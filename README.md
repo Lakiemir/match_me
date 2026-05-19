@@ -12,7 +12,7 @@ MatchMe Hobbies helps people discover compatible connections based on shared int
 |---|---|---|
 | 🔐 | Secure authentication | Register and log in with JWT authentication and bcrypt password protection |
 | 👤 | User profiles | Create and edit profile information, profile picture, and about me section |
-| 🌱 | Interests & preferences | Define hobbies, availability, social style, activity preferences, and more |
+| 🌱 | Interests & preferences | Define hobbies, availability, activity preferences, and more |
 | 📍 | Location filtering | Recommendations are filtered by city/location preferences |
 | ✨ | Smart recommendations | Discover people with strong compatibility scores |
 | ❌ | Dismiss matches | Dismissed profiles are not shown again |
@@ -131,7 +131,7 @@ Run the backend server:
 
 ```bash
 cd server
-./gradlew bootRun
+./mvnw spring-boot:run
 ```
 
 Backend URL:
@@ -257,8 +257,7 @@ The project includes a seed/reload system for testing and review.
 Example:
 
 ```bash
-cd server
-./gradlew seedUsers
+./seed.sh
 ```
 
 This loads:
@@ -289,3 +288,12 @@ The interface is optimized for:
 | ⌨️ Typing indicator | Live typing feedback during conversations |
 | 📍 GPS radius filtering | Browser geolocation + distance-based recommendations |
 | 🧠 Advanced matching | Enhanced recommendation scoring and weighting |
+---
+
+## 🤝 The Matchmakers
+
+| Team member | Gitea |
+|---|---|
+| Oluwaseun Olumide Kayode | https://gitea.kood.tech/oluwaseunkayode |
+| Emirs Abdulins | https://gitea.kood.tech/emirabdulin |
+| Jorge Guzman | https://gitea.kood.tech/jorgeguzmanrojas |
