@@ -1,5 +1,6 @@
 package com.matchme.users;
 
+import com.matchme.auth.UserRepository;
 import com.matchme.bio.BioRepository;
 import com.matchme.bio.Hobby;
 import com.matchme.bio.HobbyResponse;
@@ -17,24 +18,27 @@ import java.util.List;
 @Service
 public class UsersService {
 
+    private final UserRepository userRepository;
     private final ProfileRepository profileRepository;
     private final BioRepository bioRepository;
     private final ProfileAccessService profileAccessService;
 
     public UsersService(
+            UserRepository userRepository,
             ProfileRepository profileRepository,
             BioRepository bioRepository,
             ProfileAccessService profileAccessService
     ) {
+        this.userRepository = userRepository;
         this.profileRepository = profileRepository;
         this.bioRepository = bioRepository;
         this.profileAccessService = profileAccessService;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public UserSummaryResponse getUser(Long viewerUserId, Long targetUserId) {
         requireAllowed(viewerUserId, targetUserId);
-        Profile profile = getProfile(targetUserId);
+        Profile profile = getProfileForView(viewerUserId, targetUserId);
 
         return new UserSummaryResponse(
                 profile.getUserId(),
@@ -43,10 +47,10 @@ public class UsersService {
         );
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public UserProfileViewResponse getUserProfile(Long viewerUserId, Long targetUserId) {
         requireAllowed(viewerUserId, targetUserId);
-        Profile profile = getProfile(targetUserId);
+        Profile profile = getProfileForView(viewerUserId, targetUserId);
 
         return new UserProfileViewResponse(
                 profile.getUserId(),
@@ -55,13 +59,10 @@ public class UsersService {
         );
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public UserBioViewResponse getUserBio(Long viewerUserId, Long targetUserId) {
         requireAllowed(viewerUserId, targetUserId);
-
-        UserBio bio = bioRepository.findById(targetUserId)
-                .filter(UserBio::isComplete)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        UserBio bio = getBioForView(viewerUserId, targetUserId);
 
         List<HobbyResponse> hobbies = bio.getHobbies()
                 .stream()
@@ -84,10 +85,38 @@ public class UsersService {
         }
     }
 
-    private Profile getProfile(Long userId) {
-        return profileRepository.findById(userId)
+    private Profile getProfileForView(Long viewerUserId, Long targetUserId) {
+        if (viewerUserId.equals(targetUserId)) {
+            ensureUserExists(targetUserId);
+
+            // The owner can read an incomplete profile so the edit page can load.
+            return profileRepository.findById(targetUserId)
+                    .orElseGet(() -> profileRepository.save(new Profile(targetUserId)));
+        }
+
+        return profileRepository.findById(targetUserId)
                 .filter(Profile::isComplete)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+    }
+
+    private UserBio getBioForView(Long viewerUserId, Long targetUserId) {
+        if (viewerUserId.equals(targetUserId)) {
+            ensureUserExists(targetUserId);
+
+            // The owner can read an incomplete bio so the edit page can load.
+            return bioRepository.findById(targetUserId)
+                    .orElseGet(() -> bioRepository.save(new UserBio(targetUserId)));
+        }
+
+        return bioRepository.findById(targetUserId)
+                .filter(UserBio::isComplete)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+    }
+
+    private void ensureUserExists(Long userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid user");
+        }
     }
 
     private HobbyResponse toHobbyResponse(Hobby hobby) {

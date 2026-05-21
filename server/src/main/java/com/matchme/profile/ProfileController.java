@@ -1,6 +1,8 @@
 package com.matchme.profile;
 
 import com.matchme.auth.JwtService;
+import com.matchme.users.UserProfileViewResponse;
+import com.matchme.users.UsersService;
 import io.jsonwebtoken.JwtException;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
@@ -20,19 +22,23 @@ import org.springframework.web.server.ResponseStatusException;
 public class ProfileController {
 
     private final ProfileService profileService;
+    private final UsersService usersService;
     private final JwtService jwtService;
 
-    public ProfileController(ProfileService profileService, JwtService jwtService) {
+    public ProfileController(ProfileService profileService, UsersService usersService, JwtService jwtService) {
         this.profileService = profileService;
+        this.usersService = usersService;
         this.jwtService = jwtService;
     }
 
     @GetMapping
-    public ProfileResponse getMyProfile(
+    public UserProfileViewResponse getMyProfile(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader
     ) {
         Long userId = getUserIdFromAuthorizationHeader(authorizationHeader);
-        return profileService.getMyProfile(userId);
+
+        // Required shortcut: /me/profile behaves like /users/{myId}/profile.
+        return usersService.getUserProfile(userId, userId);
     }
 
     @PutMapping
@@ -60,7 +66,6 @@ public class ProfileController {
         String token = authorizationHeader.substring("Bearer ".length()).trim();
 
         try {
-            // The JWT subject is the logged-in user's database id.
             return jwtService.getUserIdFromToken(token);
         } catch (JwtException | IllegalArgumentException exception) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token");

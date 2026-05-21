@@ -11,9 +11,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-// Minimal user endpoints needed by recommendation cards.
+// Required user/me endpoints. They never return password or JWT data.
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api")
 public class UsersController {
 
     private final UsersService usersService;
@@ -24,7 +24,7 @@ public class UsersController {
         this.jwtService = jwtService;
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/users/{id}")
     public UserSummaryResponse getUser(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader,
             @PathVariable Long id
@@ -33,7 +33,7 @@ public class UsersController {
         return usersService.getUser(viewerUserId, id);
     }
 
-    @GetMapping("/{id}/profile")
+    @GetMapping("/users/{id}/profile")
     public UserProfileViewResponse getUserProfile(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader,
             @PathVariable Long id
@@ -42,13 +42,21 @@ public class UsersController {
         return usersService.getUserProfile(viewerUserId, id);
     }
 
-    @GetMapping("/{id}/bio")
+    @GetMapping("/users/{id}/bio")
     public UserBioViewResponse getUserBio(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader,
             @PathVariable Long id
     ) {
         Long viewerUserId = getUserIdFromAuthorizationHeader(authorizationHeader);
         return usersService.getUserBio(viewerUserId, id);
+    }
+
+    @GetMapping("/me")
+    public UserSummaryResponse getMe(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader
+    ) {
+        Long userId = getUserIdFromAuthorizationHeader(authorizationHeader);
+        return usersService.getUser(userId, userId);
     }
 
     private Long getUserIdFromAuthorizationHeader(String authorizationHeader) {
