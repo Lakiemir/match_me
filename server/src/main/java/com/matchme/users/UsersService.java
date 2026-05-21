@@ -4,9 +4,9 @@ import com.matchme.bio.BioRepository;
 import com.matchme.bio.Hobby;
 import com.matchme.bio.HobbyResponse;
 import com.matchme.bio.UserBio;
+import com.matchme.privacy.ProfileAccessService;
 import com.matchme.profile.Profile;
 import com.matchme.profile.ProfileRepository;
-import com.matchme.recommendation.RecommendationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,16 +19,16 @@ public class UsersService {
 
     private final ProfileRepository profileRepository;
     private final BioRepository bioRepository;
-    private final RecommendationService recommendationService;
+    private final ProfileAccessService profileAccessService;
 
     public UsersService(
             ProfileRepository profileRepository,
             BioRepository bioRepository,
-            RecommendationService recommendationService
+            ProfileAccessService profileAccessService
     ) {
         this.profileRepository = profileRepository;
         this.bioRepository = bioRepository;
-        this.recommendationService = recommendationService;
+        this.profileAccessService = profileAccessService;
     }
 
     @Transactional(readOnly = true)
@@ -79,7 +79,7 @@ public class UsersService {
     }
 
     private void requireAllowed(Long viewerUserId, Long targetUserId) {
-        if (!recommendationService.canViewRecommendedUser(viewerUserId, targetUserId)) {
+        if (!profileAccessService.canViewProfile(viewerUserId, targetUserId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
         }
     }
