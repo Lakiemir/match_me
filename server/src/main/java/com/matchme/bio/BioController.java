@@ -1,6 +1,8 @@
 package com.matchme.bio;
 
 import com.matchme.auth.JwtService;
+import com.matchme.users.UserBioViewResponse;
+import com.matchme.users.UsersService;
 import io.jsonwebtoken.JwtException;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
@@ -21,10 +23,12 @@ import java.util.List;
 public class BioController {
 
     private final BioService bioService;
+    private final UsersService usersService;
     private final JwtService jwtService;
 
-    public BioController(BioService bioService, JwtService jwtService) {
+    public BioController(BioService bioService, UsersService usersService, JwtService jwtService) {
         this.bioService = bioService;
+        this.usersService = usersService;
         this.jwtService = jwtService;
     }
 
@@ -34,11 +38,13 @@ public class BioController {
     }
 
     @GetMapping("/me/bio")
-    public BioResponse getMyBio(
+    public UserBioViewResponse getMyBio(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader
     ) {
         Long userId = getUserIdFromAuthorizationHeader(authorizationHeader);
-        return bioService.getMyBio(userId);
+
+        // Required shortcut: /me/bio behaves like /users/{myId}/bio.
+        return usersService.getUserBio(userId, userId);
     }
 
     @PutMapping("/me/bio")
@@ -58,7 +64,6 @@ public class BioController {
         String token = authorizationHeader.substring("Bearer ".length()).trim();
 
         try {
-            // The JWT subject is the logged-in user's database id.
             return jwtService.getUserIdFromToken(token);
         } catch (JwtException | IllegalArgumentException exception) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token");

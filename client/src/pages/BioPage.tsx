@@ -6,7 +6,7 @@ type Hobby = {
 };
 
 type Bio = {
-  userId: number;
+  id: number;
   maxDistanceKm: number;
   availability: string;
   activityPreference: string;
@@ -18,7 +18,7 @@ type Bio = {
 const API_BASE_URL = "http://localhost:8080";
 
 const emptyBio: Bio = {
-  userId: 0,
+  id: 0,
   maxDistanceKm: 20,
   availability: "",
   activityPreference: "",
@@ -104,8 +104,18 @@ export function BioPage() {
         }
 
         const bioData = (await bioResponse.json()) as Bio;
-        setBio(bioData);
-        setSelectedHobbyIds(bioData.hobbies.map((hobby) => hobby.id));
+        const nextBio = {
+          ...bioData,
+          complete:
+            bioData.maxDistanceKm > 0 &&
+            bioData.availability.trim() !== "" &&
+            bioData.activityPreference.trim() !== "" &&
+            bioData.lookingFor.trim() !== "" &&
+            bioData.hobbies.length >= 3,
+        };
+
+        setBio(nextBio);
+        setSelectedHobbyIds(nextBio.hobbies.map((hobby) => hobby.id));
       } catch {
         setMessage("Could not load your saved bio.");
       } finally {

@@ -1,5 +1,17 @@
 import { useEffect, useState } from "react";
 
+type UserSummary = {
+  id: number;
+  name: string;
+  pictureLink: string | null;
+};
+
+type UserProfile = {
+  id: number;
+  aboutMe: string;
+  city: string;
+};
+
 type Profile = {
   userId: number;
   name: string;
@@ -20,6 +32,10 @@ const emptyProfile: Profile = {
 
 const API_BASE_URL = "http://localhost:8080";
 
+function isProfileComplete(profile: Profile) {
+  return Boolean(profile.name.trim() && profile.aboutMe.trim() && profile.city.trim());
+}
+
 export function ProfilePage() {
   const [profile, setProfile] = useState<Profile>(emptyProfile);
   const [isLoading, setIsLoading] = useState(true);
@@ -38,18 +54,36 @@ export function ProfilePage() {
       }
 
       try {
-        const response = await fetch(`${API_BASE_URL}/api/me/profile`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const headers = {
+          Authorization: `Bearer ${token}`,
+        };
 
-        if (!response.ok) {
+        // Feature 8 uses the required over-fetching pattern.
+        const [meResponse, profileResponse] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/me`, { headers }),
+          fetch(`${API_BASE_URL}/api/me/profile`, { headers }),
+        ]);
+
+        if (!meResponse.ok || !profileResponse.ok) {
           throw new Error("Could not load profile.");
         }
 
-        const data = (await response.json()) as Profile;
-        setProfile(data);
+        const meData = (await meResponse.json()) as UserSummary;
+        const profileData = (await profileResponse.json()) as UserProfile;
+
+        const nextProfile = {
+          userId: meData.id,
+          name: meData.name,
+          aboutMe: profileData.aboutMe,
+          city: profileData.city,
+          pictureLink: meData.pictureLink,
+          complete: false,
+        };
+
+        setProfile({
+          ...nextProfile,
+          complete: isProfileComplete(nextProfile),
+        });
       } catch {
         setMessage("Could not load profile.");
       } finally {
@@ -57,15 +91,21 @@ export function ProfilePage() {
       }
     }
 
-    // Load the saved profile when the page opens.
     void loadProfile();
   }, [token]);
 
   function updateField(field: keyof Profile, value: string) {
-    setProfile((currentProfile) => ({
-      ...currentProfile,
-      [field]: value,
-    }));
+    setProfile((currentProfile) => {
+      const nextProfile = {
+        ...currentProfile,
+        [field]: value,
+      };
+
+      return {
+        ...nextProfile,
+        complete: isProfileComplete(nextProfile),
+      };
+    });
 
     if (field === "pictureLink") {
       setImageFailed(false);
