@@ -59,6 +59,27 @@ CREATE TABLE IF NOT EXISTS dismissed_recommendations (
     CONSTRAINT dismissed_recommendations_not_self_check CHECK (dismisser_user_id <> dismissed_user_id)
 );
 
+-- Stores one pending/accepted/rejected connection request
+CREATE TABLE IF NOT EXISTS connection_requests (
+    requester_user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    receiver_user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (requester_user_id, receiver_user_id),
+    CONSTRAINT connection_requests_not_self_check CHECK (requester_user_id <> receiver_user_id),
+    CONSTRAINT connection_requests_status_check CHECK (status IN ('PENDING', 'ACCEPTED', 'REJECTED'))
+);
+
+-- Stores accepted connections. Lower id is always user_a_id.
+CREATE TABLE IF NOT EXISTS connections (
+    user_a_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_b_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (user_a_id, user_b_id),
+    CONSTRAINT connections_order_check CHECK (user_a_id < user_b_id)
+);
+
 -- Seed the fixed hobby list used by the bio form
 INSERT INTO hobbies (id, name) VALUES
     (1, 'Sauna & cold plunge'),
