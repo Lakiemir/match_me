@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import { ProtectedRoute } from "./auth/ProtectedRoute";
 import { AppLayout } from "./layout/AppLayout";
 import { BioPage } from "./pages/BioPage";
 import { ChatPage } from "./pages/ChatPage";
@@ -16,16 +17,20 @@ export default function App() {
   return (
     <Routes>
       <Route element={<AppLayout />}>
-        <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/bio" element={<BioPage />} />
-        <Route path="/recommendations" element={<RecommendationsPage />} />
-        <Route path="/requests" element={<RequestsPage />} />
-        <Route path="/connections" element={<ConnectionsPage />} />
-        <Route path="/chats" element={<ChatsPage />} />
-        <Route path="/chats/:chatId" element={<ChatPage />} />
+
+        <Route element={<ProtectedRoute />}>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/bio" element={<BioPage />} />
+          <Route path="/recommendations" element={<RecommendationsPage />} />
+          <Route path="/requests" element={<RequestsPage />} />
+          <Route path="/connections" element={<ConnectionsPage />} />
+          <Route path="/chats" element={<ChatsPage />} />
+          <Route path="/chats/:chatId" element={<ChatPage />} />
+        </Route>
+
         <Route path="/404" element={<NotFoundPage />} />
         <Route path="*" element={<Navigate to="/404" replace />} />
       </Route>
