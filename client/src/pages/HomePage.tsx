@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Pill } from "../components/Pill";
 
 export function HomePage() {
@@ -14,7 +15,7 @@ export function HomePage() {
             <Pill color="green">Profile</Pill>
             <span className="row-text">Add your picture, location and about me.</span>
           </div>
-          <button className="ghost-button">Open</button>
+          <Link className="ghost-button" to="/profile">Open</Link>
         </div>
 
         <div className="board-row">
@@ -22,7 +23,7 @@ export function HomePage() {
             <Pill color="yellow">Interests</Pill>
             <span className="row-text">Choose hobbies, availability and preferences.</span>
           </div>
-          <button className="ghost-button">Edit</button>
+          <Link className="ghost-button" to="/bio">Edit</Link>
         </div>
 
         <div className="board-row">
@@ -30,7 +31,7 @@ export function HomePage() {
             <Pill color="blue">Matches</Pill>
             <span className="row-text">See people who match what you are looking for.</span>
           </div>
-          <button className="ghost-button">View</button>
+          <Link className="ghost-button" to="/recommendations">View</Link>
         </div>
 
         <div className="board-row">
@@ -38,7 +39,7 @@ export function HomePage() {
             <Pill color="purple">Connections</Pill>
             <span className="row-text">Manage the people you are connected with.</span>
           </div>
-          <button className="ghost-button">Manage</button>
+          <Link className="ghost-button" to="/connections">Manage</Link>
         </div>
 
         <div className="board-row">
@@ -46,7 +47,7 @@ export function HomePage() {
             <Pill color="red">Unread</Pill>
             <span className="row-text">You have new chat messages waiting.</span>
           </div>
-          <button className="ghost-button">Chats</button>
+          <Link className="ghost-button" to="/chats">Chats</Link>
         </div>
       </section>
     </div>
