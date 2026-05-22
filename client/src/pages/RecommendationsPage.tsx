@@ -44,6 +44,7 @@ export function RecommendationsPage() {
   const [message, setMessage] = useState("");
 
   const loadRecommendationCard = useCallback(async (userId: number, token: string) => {
+    // The recommendations endpoint only gives ids, so we fetch the visible profile details separately.
     const headers = {
       Authorization: `Bearer ${token}`,
     };
@@ -66,6 +67,7 @@ export function RecommendationsPage() {
   }, []);
 
   const loadRecommendations = useCallback(async () => {
+    // All protected API calls use the JWT saved by the login page.
     const token = localStorage.getItem("token");
 
     if (!token) {
@@ -100,6 +102,8 @@ export function RecommendationsPage() {
       }
 
       const recommendations = (await response.json()) as RecommendationId[];
+
+      // Convert recommendation ids into full cards the user can read and act on.
       const loadedCards = await Promise.all(
         recommendations.map((recommendation) =>
           loadRecommendationCard(recommendation.id, token),
@@ -116,6 +120,7 @@ export function RecommendationsPage() {
   }, [loadRecommendationCard]);
 
   useEffect(() => {
+    // Load recommendations once when the page opens.
     const timeoutId = window.setTimeout(() => {
       void loadRecommendations();
     }, 0);
@@ -143,10 +148,44 @@ export function RecommendationsPage() {
         throw new Error("Could not dismiss recommendation.");
       }
 
+      // Remove the dismissed user immediately so the UI matches the saved action.
       setCards((currentCards) => currentCards.filter((card) => card.user.id !== userId));
       setMessage("Recommendation dismissed.");
     } catch {
       setMessage("Could not dismiss recommendation.");
+    }
+  }
+
+  async function sendConnectionRequest(userId: number) {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      setMessage("Log in first to send connection requests.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/connections/requests/${userId}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 409) {
+        setMessage("A connection request already exists.");
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error("Could not send connection request.");
+      }
+
+      // After sending a request, the person moves out of recommendations and into requests/connections flow.
+      setCards((currentCards) => currentCards.filter((card) => card.user.id !== userId));
+      setMessage("Connection request sent.");
+    } catch {
+      setMessage("Could not send connection request.");
     }
   }
 
@@ -210,8 +249,12 @@ export function RecommendationsPage() {
                   Dismiss
                 </button>
 
-                <button className="button button-primary" type="button" disabled>
-                  Connect later
+                <button
+                  className="button button-primary"
+                  type="button"
+                  onClick={() => sendConnectionRequest(card.user.id)}
+                >
+                  Connect
                 </button>
               </div>
             </article>
