@@ -26,11 +26,7 @@ Desktop.ini
 
 .idea/
 
-.vscode/*
-!.vscode/extensions.json
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
+.vscode/
 
 *.swp
 *.swo

@@ -9,7 +9,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
-// Handles sending, accepting, and rejecting connection requests.
+// Handles sending, accepting, rejecting, listing, and removing connections
 @Service
 public class ConnectionService {
 
@@ -74,6 +74,15 @@ public class ConnectionService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<ConnectionIdResponse> getConnections(Long userId) {
+        return connectionRepository
+                .findByIdUserAIdOrIdUserBIdOrderByCreatedAtDesc(userId, userId)
+                .stream()
+                .map(connection -> new ConnectionIdResponse(getOtherUserId(connection, userId)))
+                .toList();
+    }
+
     @Transactional
     public ConnectionRequestResponse acceptRequest(Long receiverUserId, Long senderUserId) {
         ConnectionRequest request = getPendingIncomingRequest(receiverUserId, senderUserId);
@@ -94,6 +103,22 @@ public class ConnectionService {
         request.reject();
 
         return toResponse(connectionRequestRepository.save(request));
+    }
+
+    @Transactional
+    public void disconnect(Long currentUserId, Long otherUserId) {
+        if (currentUserId.equals(otherUserId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot disconnect from yourself");
+        }
+
+        Long userAId = Math.min(currentUserId, otherUserId);
+        Long userBId = Math.max(currentUserId, otherUserId);
+
+        if (!connectionRepository.existsByIdUserAIdAndIdUserBId(userAId, userBId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Connection not found");
+        }
+
+        connectionRepository.deleteByIdUserAIdAndIdUserBId(userAId, userBId);
     }
 
     private ConnectionRequest getPendingIncomingRequest(Long receiverUserId, Long senderUserId) {
@@ -120,6 +145,14 @@ public class ConnectionService {
         Long userBId = Math.max(firstUserId, secondUserId);
 
         return connectionRepository.existsByIdUserAIdAndIdUserBId(userAId, userBId);
+    }
+
+    private Long getOtherUserId(Connection connection, Long currentUserId) {
+        if (connection.getId().getUserAId().equals(currentUserId)) {
+            return connection.getId().getUserBId();
+        }
+
+        return connection.getId().getUserAId();
     }
 
     private ConnectionRequestResponse toResponse(ConnectionRequest request) {

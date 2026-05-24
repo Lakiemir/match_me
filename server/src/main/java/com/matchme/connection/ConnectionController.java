@@ -4,6 +4,7 @@ import com.matchme.auth.JwtService;
 import io.jsonwebtoken.JwtException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,7 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
-// Handles connection request API endpoints.
+// Handles connection and connection request API endpoints.
 @RestController
 @RequestMapping("/api/connections")
 public class ConnectionController {
@@ -26,6 +27,24 @@ public class ConnectionController {
     public ConnectionController(ConnectionService connectionService, JwtService jwtService) {
         this.connectionService = connectionService;
         this.jwtService = jwtService;
+    }
+
+    @GetMapping
+    public List<ConnectionIdResponse> getConnections(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader
+    ) {
+        Long userId = getUserIdFromAuthorizationHeader(authorizationHeader);
+        return connectionService.getConnections(userId);
+    }
+
+    @DeleteMapping("/{userId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void disconnect(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader,
+            @PathVariable Long userId
+    ) {
+        Long currentUserId = getUserIdFromAuthorizationHeader(authorizationHeader);
+        connectionService.disconnect(currentUserId, userId);
     }
 
     @PostMapping("/requests/{userId}")
