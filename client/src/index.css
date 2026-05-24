@@ -887,3 +887,39 @@ button:disabled {
     font-size: 1.6rem;
   }
 }
+/* =========================
+   GPS RADIUS
+========================= */
+
+.gps-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+
+  background: #0d1117;
+
+  border: 1px solid var(--border);
+  border-radius: 8px;
+
+  padding: 16px;
+}
+
+.gps-panel h3,
+.gps-panel p {
+  margin: 0;
+}
+
+.gps-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 760px) {
+  .gps-panel {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

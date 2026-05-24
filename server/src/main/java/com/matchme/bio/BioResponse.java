@@ -9,6 +9,8 @@ public record BioResponse(
         String availability,
         String activityPreference,
         String lookingFor,
+        boolean gpsEnabled,
+        boolean gpsLocationSet,
         List<HobbyResponse> hobbies,
         boolean complete
 ) {

@@ -55,11 +55,20 @@ public class BioService {
 
         Set<Hobby> hobbies = loadSelectedHobbies(request.hobbyIds());
 
+        boolean gpsEnabled = request.gpsEnabled() != null ? request.gpsEnabled() : bio.isGpsEnabled();
+        Double latitude = request.latitude() != null ? request.latitude() : bio.getLatitude();
+        Double longitude = request.longitude() != null ? request.longitude() : bio.getLongitude();
+
+        validateGpsLocation(gpsEnabled, latitude, longitude);
+
         bio.update(
                 request.maxDistanceKm(),
                 availability,
                 activityPreference,
                 lookingFor,
+                gpsEnabled,
+                latitude,
+                longitude,
                 hobbies
         );
 
@@ -97,6 +106,24 @@ public class BioService {
         }
     }
 
+    private void validateGpsLocation(boolean gpsEnabled, Double latitude, Double longitude) {
+        if (!gpsEnabled) {
+            return;
+        }
+
+        if (latitude == null || longitude == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "GPS location is missing");
+        }
+
+        if (latitude < -90 || latitude > 90) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid latitude");
+        }
+
+        if (longitude < -180 || longitude > 180) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid longitude");
+        }
+    }
+
     private String cleanText(String value) {
         if (value == null) {
             return "";
@@ -117,6 +144,8 @@ public class BioService {
                 bio.getAvailability(),
                 bio.getActivityPreference(),
                 bio.getLookingFor(),
+                bio.isGpsEnabled(),
+                bio.hasGpsLocation(),
                 hobbies,
                 bio.isComplete()
         );

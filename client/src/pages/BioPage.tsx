@@ -11,6 +11,10 @@ type Bio = {
   availability: string;
   activityPreference: string;
   lookingFor: string;
+  gpsEnabled: boolean;
+  gpsLocationSet: boolean;
+  latitude: number | null;
+  longitude: number | null;
   hobbies: Hobby[];
   complete: boolean;
 };
@@ -23,6 +27,10 @@ const emptyBio: Bio = {
   availability: "",
   activityPreference: "",
   lookingFor: "",
+  gpsEnabled: false,
+  gpsLocationSet: false,
+  latitude: null,
+  longitude: null,
   hobbies: [],
   complete: false,
 };
@@ -55,6 +63,7 @@ export function BioPage() {
   const [selectedHobbyIds, setSelectedHobbyIds] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
   const [message, setMessage] = useState("");
 
   const token = localStorage.getItem("token");
@@ -105,7 +114,12 @@ export function BioPage() {
 
         const bioData = (await bioResponse.json()) as Bio;
         const nextBio = {
+          ...emptyBio,
           ...bioData,
+          gpsEnabled: bioData.gpsEnabled ?? false,
+          gpsLocationSet: bioData.gpsLocationSet ?? false,
+          latitude: null,
+          longitude: null,
           complete:
             bioData.maxDistanceKm > 0 &&
             bioData.availability.trim() !== "" &&
@@ -137,7 +151,14 @@ export function BioPage() {
     return `${selectedCount} hobbies selected.`;
   }, [selectedCount]);
 
-  function updateField(field: keyof Bio, value: string | number) {
+  const locationStatusText =
+    bio.gpsEnabled && bio.gpsLocationSet
+      ? "GPS radius matching is on."
+      : bio.gpsEnabled
+        ? "GPS radius matching will turn on after location is saved."
+        : "City matching is used until GPS is enabled.";
+
+  function updateField(field: keyof Bio, value: string | number | boolean | null) {
     setBio((currentBio) => ({
       ...currentBio,
       [field]: value,
@@ -152,6 +173,59 @@ export function BioPage() {
 
       return [...currentIds, hobbyId];
     });
+  }
+
+  function useBrowserLocation() {
+    if (!navigator.geolocation) {
+      setMessage("Your browser does not support location sharing.");
+      return;
+    }
+
+    setIsLocating(true);
+    setMessage("Waiting for browser location permission...");
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setBio((currentBio) => ({
+          ...currentBio,
+          gpsEnabled: true,
+          gpsLocationSet: true,
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        }));
+        setMessage("Location ready. Save your bio to use GPS recommendations.");
+        setIsLocating(false);
+      },
+      (error) => {
+        if (error.code === error.PERMISSION_DENIED) {
+          setMessage("Location is blocked. Allow location in browser and system settings, then try again.");
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          setMessage("Your device could not find a location. Try again or check system location settings.");
+        } else if (error.code === error.TIMEOUT) {
+          setMessage("Location lookup timed out. Try again.");
+        } else {
+          setMessage("Location is unavailable.");
+        }
+
+        setIsLocating(false);
+      },
+      {
+        enableHighAccuracy: false,
+        timeout: 30000,
+        maximumAge: 300000,
+      },
+    );
+  }
+
+  function disableGpsLocation() {
+    setBio((currentBio) => ({
+      ...currentBio,
+      gpsEnabled: false,
+      gpsLocationSet: false,
+      latitude: null,
+      longitude: null,
+    }));
+    setMessage("GPS matching is off. Save your bio to use city matching.");
   }
 
   async function saveBio(event: React.FormEvent<HTMLFormElement>) {
@@ -179,6 +253,9 @@ export function BioPage() {
           availability: bio.availability,
           activityPreference: bio.activityPreference,
           lookingFor: bio.lookingFor,
+          gpsEnabled: bio.gpsEnabled,
+          latitude: bio.latitude,
+          longitude: bio.longitude,
           hobbyIds: selectedHobbyIds,
         }),
       });
@@ -194,7 +271,12 @@ export function BioPage() {
       }
 
       const data = (await response.json()) as Bio;
-      setBio(data);
+      setBio({
+        ...emptyBio,
+        ...data,
+        latitude: null,
+        longitude: null,
+      });
       setSelectedHobbyIds(data.hobbies.map((hobby) => hobby.id));
       setMessage(data.complete ? "Bio saved." : "Bio saved, but it is not complete yet.");
     } catch {
@@ -235,7 +317,7 @@ export function BioPage() {
 
       <form className="form-card bio-form" onSubmit={saveBio}>
         <label>
-          Maximum distance in km
+          Maximum distance in km for GPS recommendations
           <input
             type="number"
             min={1}
@@ -244,6 +326,33 @@ export function BioPage() {
             onChange={(event) => updateField("maxDistanceKm", Number(event.target.value))}
           />
         </label>
+
+        <section className="gps-panel">
+          <div>
+            <h3>GPS radius matching</h3>
+            <p className="muted-text">{locationStatusText}</p>
+          </div>
+
+          <div className="gps-actions">
+            <button
+              className="button button-secondary"
+              type="button"
+              onClick={useBrowserLocation}
+              disabled={isLocating}
+            >
+              {isLocating ? "Finding location..." : "Use my current location"}
+            </button>
+
+            <button
+              className="ghost-button"
+              type="button"
+              onClick={disableGpsLocation}
+              disabled={!bio.gpsEnabled}
+            >
+              Use city instead
+            </button>
+          </div>
+        </section>
 
         <label>
           Availability

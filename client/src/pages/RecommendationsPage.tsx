@@ -27,6 +27,7 @@ type UserBio = {
   availability: string;
   activityPreference: string;
   lookingFor: string;
+  distanceKm: number | null;
   hobbies: Hobby[];
 };
 
@@ -203,8 +204,8 @@ export function RecommendationsPage() {
         <p className="eyebrow">Recommendations</p>
         <h2>Recommended people</h2>
         <p className="muted-text">
-          Recommendations use city, shared hobbies, availability, activity preference and
-          what people are looking for.
+          Recommendations use shared hobbies, availability, activity preference, goals and
+          your selected city or GPS radius.
         </p>
       </div>
 
@@ -226,7 +227,10 @@ export function RecommendationsPage() {
 
               <div className="recommendation-content">
                 <h3>{card.user.name}</h3>
-                <p className="muted-text">{card.profile.city}</p>
+                <p className="muted-text">
+                  {card.profile.city}
+                  {typeof card.bio.distanceKm === "number" ? ` - ${card.bio.distanceKm} km away` : ""}
+                </p>
                 <p>{card.profile.aboutMe}</p>
 
                 <div className="recommendation-tags">

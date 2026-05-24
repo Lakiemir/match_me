@@ -11,6 +11,9 @@ public record UserBioViewResponse(
         String availability,
         String activityPreference,
         String lookingFor,
+        boolean gpsEnabled,
+        boolean gpsLocationSet,
+        Integer distanceKm,
         List<HobbyResponse> hobbies
 ) {
 }
