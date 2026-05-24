@@ -43,7 +43,7 @@ public class RecommendationService {
                 .stream()
                 .filter(candidateProfile -> !candidateProfile.getUserId().equals(userId))
                 .filter(Profile::isComplete)
-                .filter(candidateProfile -> sameCity(currentProfile, candidateProfile))
+                .filter(candidateProfile -> locationAllowed(currentProfile, currentBio, candidateProfile))
                 .filter(candidateProfile -> !isDismissed(userId, candidateProfile.getUserId()))
                 .map(candidateProfile -> toMatch(currentProfile, currentBio, candidateProfile))
                 .filter(match -> match.score() >= MIN_SCORE)
@@ -83,7 +83,8 @@ public class RecommendationService {
         Profile targetProfile = getCompleteProfileOrNull(targetUserId);
         UserBio viewerBio = getCompleteBioOrNull(viewerUserId);
 
-        if (viewerProfile == null || targetProfile == null || viewerBio == null || !sameCity(viewerProfile, targetProfile)) {
+        if (viewerProfile == null || targetProfile == null || viewerBio == null
+                || !locationAllowed(viewerProfile, viewerBio, targetProfile)) {
             return false;
         }
 
@@ -154,8 +155,40 @@ public class RecommendationService {
                 .orElse(null);
     }
 
+    private boolean locationAllowed(Profile currentProfile, UserBio currentBio, Profile candidateProfile) {
+        // Default behavior stays city matching until the user enables GPS radius matching.
+        if (!currentBio.hasGpsLocation()) {
+            return sameCity(currentProfile, candidateProfile);
+        }
+
+        UserBio candidateBio = getCompleteBioOrNull(candidateProfile.getUserId());
+
+        if (candidateBio == null || !candidateBio.hasGpsLocation()) {
+            return false;
+        }
+
+        return distanceKm(
+                currentBio.getLatitude(),
+                currentBio.getLongitude(),
+                candidateBio.getLatitude(),
+                candidateBio.getLongitude()
+        ) <= currentBio.getMaxDistanceKm();
+    }
+
     private boolean sameCity(Profile currentProfile, Profile candidateProfile) {
         return currentProfile.getCity().trim().equalsIgnoreCase(candidateProfile.getCity().trim());
+    }
+
+    private double distanceKm(double firstLatitude, double firstLongitude, double secondLatitude, double secondLongitude) {
+        double earthRadiusKm = 6371.0;
+        double latitudeDistance = Math.toRadians(secondLatitude - firstLatitude);
+        double longitudeDistance = Math.toRadians(secondLongitude - firstLongitude);
+
+        double a = Math.sin(latitudeDistance / 2) * Math.sin(latitudeDistance / 2)
+                + Math.cos(Math.toRadians(firstLatitude)) * Math.cos(Math.toRadians(secondLatitude))
+                * Math.sin(longitudeDistance / 2) * Math.sin(longitudeDistance / 2);
+
+        return earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 
     private boolean isDismissed(Long userId, Long candidateUserId) {

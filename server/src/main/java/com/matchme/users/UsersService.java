@@ -75,8 +75,43 @@ public class UsersService {
                 bio.getAvailability(),
                 bio.getActivityPreference(),
                 bio.getLookingFor(),
+                bio.isGpsEnabled(),
+                bio.hasGpsLocation(),
+                distanceBetweenUsersKm(viewerUserId, targetUserId),
                 hobbies
         );
+    }
+
+    private Integer distanceBetweenUsersKm(Long viewerUserId, Long targetUserId) {
+        if (viewerUserId.equals(targetUserId)) {
+            return null;
+        }
+
+        UserBio viewerBio = bioRepository.findById(viewerUserId).orElse(null);
+        UserBio targetBio = bioRepository.findById(targetUserId).orElse(null);
+
+        if (viewerBio == null || targetBio == null || !viewerBio.hasGpsLocation() || !targetBio.hasGpsLocation()) {
+            return null;
+        }
+
+        return (int) Math.round(distanceKm(
+                viewerBio.getLatitude(),
+                viewerBio.getLongitude(),
+                targetBio.getLatitude(),
+                targetBio.getLongitude()
+        ));
+    }
+
+    private double distanceKm(double firstLatitude, double firstLongitude, double secondLatitude, double secondLongitude) {
+        double earthRadiusKm = 6371.0;
+        double latitudeDistance = Math.toRadians(secondLatitude - firstLatitude);
+        double longitudeDistance = Math.toRadians(secondLongitude - firstLongitude);
+
+        double a = Math.sin(latitudeDistance / 2) * Math.sin(latitudeDistance / 2)
+                + Math.cos(Math.toRadians(firstLatitude)) * Math.cos(Math.toRadians(secondLatitude))
+                * Math.sin(longitudeDistance / 2) * Math.sin(longitudeDistance / 2);
+
+        return earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 
     private void requireAllowed(Long viewerUserId, Long targetUserId) {

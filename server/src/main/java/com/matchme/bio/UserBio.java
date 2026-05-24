@@ -35,6 +35,15 @@ public class UserBio {
     @Column(nullable = false)
     private boolean complete = false;
 
+    @Column
+    private Double latitude;
+
+    @Column
+    private Double longitude;
+
+    @Column(name = "gps_enabled", nullable = false)
+    private boolean gpsEnabled = false;
+
     @ManyToMany
     @JoinTable(
             name = "user_hobbies",
@@ -74,6 +83,18 @@ public class UserBio {
         return complete;
     }
 
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public boolean isGpsEnabled() {
+        return gpsEnabled;
+    }
+
     public Set<Hobby> getHobbies() {
         return hobbies;
     }
@@ -83,12 +104,18 @@ public class UserBio {
             String availability,
             String activityPreference,
             String lookingFor,
+            boolean gpsEnabled,
+            Double latitude,
+            Double longitude,
             Set<Hobby> hobbies
     ) {
         this.maxDistanceKm = maxDistanceKm;
         this.availability = availability;
         this.activityPreference = activityPreference;
         this.lookingFor = lookingFor;
+        this.gpsEnabled = gpsEnabled;
+        this.latitude = gpsEnabled ? latitude : null;
+        this.longitude = gpsEnabled ? longitude : null;
         this.hobbies = hobbies;
 
         // Bio is complete when the user has enough matching data.
@@ -98,5 +125,9 @@ public class UserBio {
                         && !availability.isBlank()
                         && !activityPreference.isBlank()
                         && !lookingFor.isBlank();
+    }
+
+    public boolean hasGpsLocation() {
+        return gpsEnabled && latitude != null && longitude != null;
     }
 }

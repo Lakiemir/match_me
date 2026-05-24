@@ -286,7 +286,7 @@ The interface is optimized for:
 |---|---|
 | 🟢 Online status | Online/offline indicators in profiles and chats |
 | ⌨️ Typing indicator | Live typing feedback during conversations |
-| 📍 GPS radius filtering | Browser geolocation + distance-based recommendations |
+| 📍 GPS radius filtering | Browser geolocation, saved coordinates, and radius-based recommendations without PostGIS |
 | 🧠 Advanced matching | Enhanced recommendation scoring and weighting |
 ---
 
@@ -297,3 +297,23 @@ The interface is optimized for:
 | Oluwaseun Olumide Kayode | https://gitea.kood.tech/oluwaseunkayode |
 | Emirs Abdulins | https://gitea.kood.tech/emirabdulin |
 | Jorge Guzman | https://gitea.kood.tech/jorgeguzmanrojas |
+
+### Testing GPS radius locally
+
+Browser GPS can fail on some laptops even when Chrome permission is allowed. For a reliable local demo, use Chrome DevTools:
+
+1. Open `http://localhost:5173/bio`.
+2. Open DevTools with `Cmd + Option + I`.
+3. Go to `More tools -> Sensors`.
+4. Set Location to `Other...`.
+5. Use Tallinn test coordinates:
+   - Latitude: `59.4370`
+   - Longitude: `24.7536`
+   - Timezone ID: `Europe/Tallinn`
+   - Locale: `et-EE`
+6. Click `Use my current location`.
+7. Click `Save bio`.
+
+When GPS is enabled, MatchMe stores the coordinates privately and filters recommendations by the current user's maximum distance. If GPS is disabled, recommendations use the normal city matching fallback.
+
+Recommendation cards show an approximate distance in kilometers when GPS radius matching is active for both users. Exact latitude and longitude are never shown in public profile responses.

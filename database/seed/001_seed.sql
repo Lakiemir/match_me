@@ -271,3 +271,43 @@ FROM seed_data
 JOIN users ON users.email = seed_data.email;
 
 COMMIT;
+
+-- Feature 11 bonus: give seed users GPS coordinates near their city.
+ALTER TABLE user_bios ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION;
+ALTER TABLE user_bios ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION;
+ALTER TABLE user_bios ADD COLUMN IF NOT EXISTS gps_enabled BOOLEAN NOT NULL DEFAULT FALSE;
+
+UPDATE user_bios
+SET
+    latitude = city_coordinates.base_lat
+        + (((substring(users.email from 'seed([0-9]+)')::integer % 7) - 3) * 0.006),
+    longitude = city_coordinates.base_lon
+        + (((substring(users.email from 'seed([0-9]+)')::integer % 11) - 5) * 0.010),
+    gps_enabled = TRUE
+FROM profiles
+JOIN users ON users.id = profiles.user_id
+JOIN (
+    VALUES
+        ('Tallinn', 59.4370, 24.7536),
+        ('Tartu', 58.3776, 26.7290),
+        ('Narva', 59.3797, 28.1791),
+        ('Pärnu', 58.3859, 24.4971),
+        ('Kohtla-Järve', 59.3986, 27.2731),
+        ('Viljandi', 58.3639, 25.5900),
+        ('Rakvere', 59.3464, 26.3558),
+        ('Maardu', 59.4653, 24.9822),
+        ('Kuressaare', 58.2520, 22.4869),
+        ('Võru', 57.8428, 27.0194),
+        ('Valga', 57.7778, 26.0473),
+        ('Haapsalu', 58.9431, 23.5414),
+        ('Jõhvi', 59.3592, 27.4211),
+        ('Paide', 58.8856, 25.5572),
+        ('Keila', 59.3036, 24.4131),
+        ('Sillamäe', 59.3969, 27.7631),
+        ('Rapla', 59.0072, 24.7928),
+        ('Elva', 58.2225, 26.4210),
+        ('Põlva', 58.0603, 27.0694),
+        ('Türi', 58.8086, 25.4325)
+) AS city_coordinates(city, base_lat, base_lon) ON city_coordinates.city = profiles.city
+WHERE profiles.user_id = user_bios.user_id
+  AND users.email LIKE 'seed%.test';

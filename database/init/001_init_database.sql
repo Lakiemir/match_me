@@ -30,8 +30,14 @@ CREATE TABLE IF NOT EXISTS user_bios (
     activity_preference VARCHAR(30) NOT NULL DEFAULT '',
     looking_for VARCHAR(30) NOT NULL DEFAULT '',
     complete BOOLEAN NOT NULL DEFAULT FALSE,
+    latitude DOUBLE PRECISION,
+    longitude DOUBLE PRECISION,
+    gps_enabled BOOLEAN NOT NULL DEFAULT FALSE,
 
     CONSTRAINT user_bios_max_distance_check CHECK (max_distance_km > 0),
+    CONSTRAINT user_bios_latitude_check CHECK (latitude IS NULL OR (latitude >= -90 AND latitude <= 90)),
+    CONSTRAINT user_bios_longitude_check CHECK (longitude IS NULL OR (longitude >= -180 AND longitude <= 180)),
+    CONSTRAINT user_bios_gps_enabled_check CHECK (gps_enabled = FALSE OR (latitude IS NOT NULL AND longitude IS NOT NULL)),
     CONSTRAINT user_bios_availability_check CHECK (
         availability IN ('', 'weeknights', 'weekends', 'flexible')
     ),
