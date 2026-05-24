@@ -4,6 +4,7 @@ import { AppLayout } from "./layout/AppLayout";
 import { BioPage } from "./pages/BioPage";
 import { ChatPage } from "./pages/ChatPage";
 import { ChatsPage } from "./pages/ChatsPage";
+import { ConnectedProfilePage } from "./pages/ConnectedProfilePage";
 import { ConnectionsPage } from "./pages/ConnectionsPage";
 import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
@@ -27,6 +28,7 @@ export default function App() {
           <Route path="/recommendations" element={<RecommendationsPage />} />
           <Route path="/requests" element={<RequestsPage />} />
           <Route path="/connections" element={<ConnectionsPage />} />
+          <Route path="/connections/:userId" element={<ConnectedProfilePage />} />
           <Route path="/chats" element={<ChatsPage />} />
           <Route path="/chats/:chatId" element={<ChatPage />} />
         </Route>
