@@ -1,5 +1,6 @@
 import SockJS from 'sockjs-client';
-import {Client, StompSubscription} from '@stomp/stompjs';
+import {Client} from '@stomp/stompjs';
+import type {StompSubscription} from '@stomp/stompjs';
 class WebSocketService{
     private client: Client | null = null;
     private subscriptions: Map<string, StompSubscription> = new Map();
@@ -10,7 +11,7 @@ class WebSocketService{
         this.connectionPromise = new Promise((resolve, reject) => {
             const wsUrl = import.meta.env.VITE_WS_URL || 'http://localhost:8080/ws';
             this.client = new Client({
-                wevSocketFacroty: () => new SockJS(ws>Url),
+                webSocketFactory: () => new SockJS(wsUrl),
                 connectHeaders: {
                     Authorization: `Bearer ${token}`
                 },
@@ -22,11 +23,11 @@ class WebSocketService{
                     console.log('WebSocket успешно подключен');
                     resolve();
                 },
-                onStompError: (frame) = {
+                onStompError: (frame) => {
                     console.error('Ошибка STOMP:', frame.headers['message']);
-                    reject(new Error(frame.headers['nessage']));
+                    reject(new Error(frame.headers['message']));
                 },
-                on WebSocketError: (error) => {
+                onWebSocketError: (error) => {
                     console.error('Ошибка соединения WebSocket:', error);
                 },
                 onWebSocketClose: () => {
@@ -50,45 +51,43 @@ class WebSocketService{
             this.unsubscribe(destination);
         }
         const subscription = this.client.subscribe(destination, (message) => {
-      callback(JSON.parse(message.body));
-    });
+            callback(JSON.parse(message.body));
+        });
 
-    
-    this.subscriptions.set(destination, subscription);
-  }
-  unsubscribe(destination: string) {
-    const subscription = this.subscriptions.get(destination);
-    if (subscription) {
-      subscription.unsubscribe();
-      this.subscriptions.delete(destination);
-      console.log(`Отписка от ${destination} выполнена`);
+        this.subscriptions.set(destination, subscription);
     }
-  }
+
+    unsubscribe(destination: string) {
+        const subscription = this.subscriptions.get(destination);
+        if (subscription) {
+            subscription.unsubscribe();
+            this.subscriptions.delete(destination);
+            console.log(`Отписка от ${destination} выполнена`);
+        }
+    }
+
     async send(destination: string, body: any) {
-   
-    await this.connectionPromise;
+        await this.connectionPromise;
 
-    if (!this.client || !this.client.connected) {
-      console.error('Невозможно отправить сообщение: WebSocket отключен');
-      return;
+        if (!this.client || !this.client.connected) {
+            console.error('Невозможно отправить сообщение: WebSocket отключен');
+            return;
+        }
+
+        this.client.publish({
+            destination,
+            body: JSON.stringify(body)
+        });
     }
 
-    this.client.publish({
-      destination,
-      body: JSON.stringify(body)
-    });
-  }
-
-  disconnect() {
-    if (this.client) {
-      
-      this.client.deactivate();
-      this.client = null;
-      this.connectionPromise = null;
-      this.subscriptions.clear();
-      console.log('WebSocket отключен вручную');
+    disconnect() {
+        if (this.client) {
+            this.client.deactivate();
+            this.client = null;
+            this.connectionPromise = null;
+            this.subscriptions.clear();
+            console.log('WebSocket отключен вручную');
+        }
     }
-  }
 }
 export const webSocketService = new WebSocketService();
-    

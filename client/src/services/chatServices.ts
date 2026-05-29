@@ -31,6 +31,23 @@ class ChatService {
         }
         return response.json();
     }
+    
+    async createOrGetChat(companionId: number, token: string) {
+    const response = await fetch(`${API_URL}/chats`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      
+      body: JSON.stringify({ companionId }), 
+    });
+
+    if (!response.ok) {
+      throw new Error('Ошибка при создании чата');
+    }
+    return response.json(); 
+    }
     subscribeToChat(chatId: number, onMessageReceived: (message: any) => void){
         const topic = `/topic/chat/${chatId}`;
         webSocketService.subscribe(topic, onMessageReceived);
