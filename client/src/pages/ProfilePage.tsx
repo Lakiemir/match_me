@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { NavLink } from "react-router-dom";
 
 type UserSummary = {
   id: number;
@@ -112,7 +113,6 @@ export function ProfilePage() {
           Authorization: `Bearer ${token}`,
         };
 
-        // Feature 8 uses the required over-fetching pattern.
         const [meResponse, profileResponse] = await Promise.all([
           fetch(`${API_BASE_URL}/api/me`, { headers }),
           fetch(`${API_BASE_URL}/api/me/profile`, { headers }),
@@ -379,6 +379,16 @@ export function ProfilePage() {
 
         {message && <p className="muted-text">{message}</p>}
       </form>
+
+      <div className="form-card" style={{ marginTop: '2rem' }}>
+        <h3>Connect and Chat</h3>
+        <p className="muted-text" style={{ marginBottom: '1rem' }}>
+          To start chatting with another user, find them through recommendations or connections, then use the chat button on their profile.
+        </p>
+        <NavLink to="/recommendations" className="button button-primary">
+          Find Users to Chat With
+        </NavLink>
+      </div>
     </div>
   );
 }

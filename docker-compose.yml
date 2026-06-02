@@ -48,5 +48,29 @@ services:
     depends_on:
       - server
 
+  backend:
+    build: ./server
+    container_name: matchme-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/matchme
+      SPRING_DATASOURCE_USERNAME: matchme_user
+      SPRING_DATASOURCE_PASSWORD: mp01
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build: ./client
+    container_name: matchme-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
 volumes:
   matchme_postgres_data:
