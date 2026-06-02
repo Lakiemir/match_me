@@ -25,7 +25,7 @@ type IncomingRequestCard = {
   profile: UserProfile;
 };
 
-const API_BASE_URL = "http://localhost:8080";
+const API_BASE_URL = "";
 
 export function RequestsPage() {
   const [cards, setCards] = useState<IncomingRequestCard[]>([]);
@@ -56,7 +56,7 @@ export function RequestsPage() {
 
   const loadIncomingRequests = useCallback(async () => {
     // The backend uses the JWT to know whose incoming requests to return.
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
 
     if (!token) {
       setMessage("Log in first to see connection requests.");
@@ -75,7 +75,7 @@ export function RequestsPage() {
       });
 
       if (response.status === 401) {
-        localStorage.removeItem("token");
+        sessionStorage.removeItem("token");
         setMessage("Your login expired. Log in again.");
         return;
       }
@@ -110,7 +110,7 @@ export function RequestsPage() {
   }, [loadIncomingRequests]);
 
   async function answerRequest(senderUserId: number, action: "accept" | "reject") {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
 
     if (!token) {
       setMessage("Log in first to answer connection requests.");

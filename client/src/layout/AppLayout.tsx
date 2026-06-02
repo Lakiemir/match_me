@@ -1,12 +1,16 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
+import { useChatContext } from "../context/useChatContext";
 import { navigationItems } from "../data/navigation";
 
-const API_BASE_URL = "http://localhost:8080";
+const API_BASE_URL = "";
 
 export function AppLayout() {
   const { isAuthenticated, logout, token } = useAuth();
+  const { chats } = useChatContext();
   const navigate = useNavigate();
+
+  const totalUnread = chats.reduce((sum, chat) => sum + chat.unreadCount, 0);
 
   async function handleLogout() {
     // Backend logout is stateless, but calling it keeps the UI aligned with the API.
@@ -46,6 +50,9 @@ export function AppLayout() {
               >
                 <span>{item.icon}</span>
                 <span>{item.label}</span>
+                {item.path === "/chats" && totalUnread > 0 && (
+                  <span className="nav-unread">{totalUnread}</span>
+                )}
               </NavLink>
             ))}
           </nav>

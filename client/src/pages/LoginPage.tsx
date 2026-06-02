@@ -3,7 +3,7 @@ import type { SyntheticEvent } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
 
-const API_BASE_URL = "http://localhost:8080";
+const API_BASE_URL = "";
 
 type LoginResponse = {
   token: string;

@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
 
 spring:
   application:
@@ -8,11 +8,10 @@ spring:
   datasource:
     # PostgreSQL database connection - format:
     # jdbc:postgresql://HOST:PORT/DATABASE
-    url: jdbc:postgresql://127.0.0.1:5433/matchme
-
-    username: matchme_user
-    password: mp01
-
+    # Environment variables make this work locally and inside Docker
+    url: jdbc:postgresql://${DB_HOST:127.0.0.1}:${DB_PORT:5433}/${DB_NAME:matchme}
+    username: ${DB_USER:matchme_user}
+    password: ${DB_PASSWORD:mp01}
     # Java driver used to connect to PostgreSQL
     driver-class-name: org.postgresql.Driver
 
@@ -33,4 +32,4 @@ app:
     # Secret used to sign JWT tokens; env var should override this in real deployments.
     secret: ${JWT_SECRET:q1w2e3r4t5y6u7i8o9p0q1w2e3r4t5y6}
     # 1 hour token lifetime
-    expiration-ms: 3600000
+    expiration-ms: ${JWT_EXPIRATION_MS:3600000}

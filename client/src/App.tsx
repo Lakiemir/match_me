@@ -1,5 +1,8 @@
+import { useEffect } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
+import { useAuth } from "./auth/useAuth";
 import { ProtectedRoute } from "./auth/ProtectedRoute";
+import { useChatContext } from "./context/useChatContext";
 import { AppLayout } from "./layout/AppLayout";
 import { BioPage } from "./pages/BioPage";
 import { ChatPage } from "./pages/ChatPage";
@@ -15,6 +18,18 @@ import { RegisterPage } from "./pages/RegisterPage";
 import { RequestsPage } from "./pages/RequestsPage";
 
 export default function App() {
+  const { token, isAuthenticated } = useAuth();
+  const { connectWebSocket, disconnectWebSocket, loadChats } = useChatContext();
+
+  useEffect(() => {
+    if (isAuthenticated && token) {
+      void connectWebSocket(token);
+      void loadChats(token);
+    } else {
+      disconnectWebSocket();
+    }
+  }, [isAuthenticated, token, connectWebSocket, disconnectWebSocket, loadChats]);
+
   return (
     <Routes>
       <Route element={<AppLayout />}>

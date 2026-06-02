@@ -22,7 +22,7 @@ type ConnectionCard = {
   profile: UserProfile;
 };
 
-const API_BASE_URL = "http://localhost:8080";
+const API_BASE_URL = "";
 
 export function ConnectionsPage() {
   const [cards, setCards] = useState<ConnectionCard[]>([]);
@@ -51,7 +51,7 @@ export function ConnectionsPage() {
   }, []);
 
   const loadConnections = useCallback(async () => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
 
     if (!token) {
       setMessage("Log in first to see connections.");
@@ -70,7 +70,7 @@ export function ConnectionsPage() {
       });
 
       if (response.status === 401) {
-        localStorage.removeItem("token");
+        sessionStorage.removeItem("token");
         setMessage("Your login expired. Log in again.");
         return;
       }
@@ -105,7 +105,7 @@ export function ConnectionsPage() {
 
 
   async function disconnect(userId: number) {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
 
     if (!token) {
       setMessage("Log in first to disconnect.");
