@@ -1,16 +1,11 @@
-# Этап сборки
-FROM eclipse-temurin:21-jdk-alpine AS build
+FROM eclipse-temurin:21-jdk
+
 WORKDIR /app
 
-# Копируем файлы сборки Maven
-COPY pom.xml .
-COPY mvnw .
-COPY .mvn .mvn
-COPY src src
+COPY . .
 
-RUN ./mvnw clean package -DskipTests
+RUN chmod +x mvnw
 
-FROM eclipse-temurin:21-jre-alpine
-WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
-ENTRYPOINT ["java", "-jar", "app.jar"]
+EXPOSE 8080
+
+CMD ["./mvnw", "spring-boot:run"]

@@ -3,7 +3,7 @@ import type { SyntheticEvent } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
 
-const API_BASE_URL = "http://localhost:8080";
+const API_BASE_URL = "";
 
 export function RegisterPage() {
   const { isAuthenticated } = useAuth();

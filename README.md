@@ -1,282 +1,234 @@
 # 🎳 MatchMe Hobbies
 
-### A modern full-stack social matching platform built around hobbies, interests, preferences, and real-time connections
+### A full-stack social matching platform built around hobbies, preferences, location, and real-time connections
 
-MatchMe Hobbies helps people discover compatible connections based on shared interests, lifestyle preferences, and location. Users can build profiles, receive recommendations, connect with others, and chat in real time.
-
----
-
-## ✨ Features
-
-| | Feature | Description |
-|---|---|---|
-| 🔐 | Secure authentication | Register and log in with JWT authentication and bcrypt password protection |
-| 👤 | User profiles | Create and edit profile information, profile picture, and about me section |
-| 🌱 | Interests & preferences | Define hobbies, availability, activity preferences, and more |
-| 📍 | Location filtering | Recommendations are filtered by city/location preferences |
-| ✨ | Smart recommendations | Discover people with strong compatibility scores |
-| ❌ | Dismiss matches | Dismissed profiles are not shown again |
-| 🤝 | Connections | Send, accept, reject, and remove connections |
-| 💬 | Real-time chat | Instant messaging between connected users |
-| 🔔 | Unread notifications | New messages appear instantly with unread indicators |
-| 🛡️ | Privacy protection | Profiles are only visible when access is allowed |
-| 📱 | Responsive design | Optimized for desktop, tablet, and mobile browsers |
-| 🧪 | Seed users | Load 100+ fictitious users for testing and review |
-
----
-
-## 🛠️ Tech Stack
-
-![React](https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB)
-![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)
-![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white)
-![Java](https://img.shields.io/badge/Java-ED8B00?style=flat-square&logo=openjdk&logoColor=white)
-![Spring Boot](https://img.shields.io/badge/Spring_Boot-6DB33F?style=flat-square&logo=springboot&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=flat-square&logo=postgresql&logoColor=white)
-![WebSocket](https://img.shields.io/badge/WebSocket-010101?style=flat-square&logo=socketdotio&logoColor=white)
+MatchMe Hobbies helps people discover compatible connections based on shared interests, lifestyle preferences, and location. Users can build profiles, receive scored recommendations, connect with others, and chat in real time.
 
 ---
 
 ## 🧩 Project Overview
 
-- Full-stack social recommendation platform
-- Recommendation-based profile discovery
-- JWT-secured authentication flow
-- Real-time chat using WebSocket + STOMP
-- REST API with ids-first fetching pattern
-- PostgreSQL relational database
-- Responsive GitHub-inspired dark UI
-- Feature-based development workflow with pull requests
+MatchMe Hobbies is a monorepo with separate frontend, backend, and database areas:
 
----
+```txt
+matchme-web/
+├── client/              React + TypeScript frontend
+├── server/              Java Spring Boot backend
+├── database/
+│   ├── init/            Database schema
+│   └── seed/            Fictitious users
+├── postman/             API collection and environment
+├── docker-compose.yml   Full app runtime
+└── seed.sh              Reload seed users
+```
 
-## 🏗️ Architecture Decisions
+The backend is a layered Spring Boot application. Features such as auth, profiles, bio, recommendations, privacy, connections, and chat are kept in focused packages while sharing the same PostgreSQL database and JWT security flow.
 
-MatchMe Hobbies uses a monorepo architecture with separate `client/`, `server/`, and `database/` folders to keep frontend, backend, and database responsibilities clearly organized while maintaining a unified development workflow.
+### ✨ Features
 
-The backend follows a layered modular monolith architecture using Java Spring Boot, where features such as authentication, profiles, recommendations, connections, and chat are implemented as internal modules inside a single backend application.
+| | Feature | Description |
+|---|---|---|
+| 🔐 | Secure authentication | Users register and log in with a unique email and password. Passwords are protected with BCrypt and sessions use JWT. |
+| 👤 | User profiles | Users can create and edit their public profile with name, about me, city, and profile picture. |
+| 🌱 | Bio and preferences | Users configure hobbies, availability, activity preference, looking-for, distance, and optional GPS location. |
+| 📍 | Location filtering | Recommendations use city matching by default and GPS radius matching when the user enables browser location. |
+| ✨ | Recommendations | Matches are found with shared hobbies, availability, activity preference, looking-for, and location rules. Strongest matches appear first. |
+| ❌ | Dismiss matches | Dismissed recommendations are saved and are not shown again. |
+| 🤝 | Connections | Users can send connection requests, accept or reject incoming requests, and disconnect later. |
+| 💬 | Real-time chat | Connected users can start or resume one shared chat history. New messages arrive instantly through WebSocket + STOMP. |
+| 🟢 | Presence | Profile and chat views show online/offline status based on active WebSocket connections. |
+| 🔔 | Unread notifications | Unread badges update in real time when messages arrive. |
+| ⌨️ | Typing indicator | Chat shows when the other user is typing and clears after they stop. |
+| 🛡️ | Privacy protection | Profiles are only visible when access is allowed. Private data such as email and password hashes is not exposed. |
+| 📱 | Responsive design | The UI is built to work on desktop, tablet, and mobile browsers. |
+| 🧪 | Seed users | Reviewers can load 150 fictitious users to test matching with realistic data. |
 
-This approach was selected because the project features are tightly connected, share the same PostgreSQL data model and security rules, and require centralized JWT authentication, privacy handling, recommendation logic, and realtime communication through WebSocket/STOMP.
+### 🛠️ Tech Stack
 
-More complex architectures such as microservices, clean architecture, hexagonal architecture, CQRS, or event-driven systems were evaluated but not selected because they would add unnecessary operational and abstraction complexity for the current product scope and requirements.
-
----
-
-## 🗺️ Main Routes
-
-| Route | Description |
+| Area | Technology |
 |---|---|
-| `/` | Dashboard |
-| `/register` | Create account |
-| `/login` | Log in |
-| `/profile` | User profile |
-| `/bio` | Interests and preferences |
-| `/recommendations` | Recommended users |
-| `/requests` | Incoming connection requests |
-| `/connections` | Connected users |
-| `/chats` | Chat list |
-| `/chats/:id` | Chat conversation |
+| Frontend | React, TypeScript, Vite |
+| Backend | Java, Spring Boot |
+| Database | PostgreSQL |
+| Auth | JWT, BCrypt |
+| Realtime | WebSocket, STOMP, SockJS |
+| Runtime | Docker Compose |
+
+### 👫 Recommendation Logic
+
+Recommendations are intentionally simple and explainable. The backend first removes users who are not valid candidates, then scores the remaining users, sorts the strongest matches first, and returns only their ids.
+
+| Step | What happens |
+|---|---|
+| 1 | The current user must have a complete profile and complete bio. |
+| 2 | The candidate must also have a complete profile and complete bio. |
+| 3 | The candidate must be in the same city, unless GPS matching is enabled. |
+| 4 | If GPS is enabled, the candidate must be inside the current user's maximum radius. |
+| 5 | The candidate must not have been dismissed before. |
+| 6 | The candidate must share at least one hobby with the current user. |
+| 7 | The candidate receives a compatibility score. |
+| 8 | Weak matches below the minimum score are removed. |
+| 9 | Matches are sorted by highest score first. |
+| 10 | The endpoint returns a maximum of 10 recommendation ids. |
+
+The scoring starts only after the location and shared-hobby checks pass.
+
+| Match signal | Score |
+|---|---:|
+| Base score for a possible match | `4` |
+| Each shared hobby | `+3` |
+| Compatible availability | `+2` |
+| Compatible activity preference | `+2` |
+| Same looking-for goal | `+2` |
+
+A recommendation must reach at least `10 points`.
 
 ---
 
-## 🚀 Setup & Installation
+## 🚀 Setup And Installation
 
-### 1. Clone the repository
+### Run The Full App With Docker
 
-```bash
-git clone <repository-url>
-cd matchme-web
-```
+Docker Compose runs the full application: PostgreSQL, backend, and frontend.
 
----
+| Action | Command |
+|---|---|
+| Start everything | `docker compose up --build` |
+| Open frontend | `http://localhost:5173` |
+| Backend API | `http://localhost:8080` |
+| PostgreSQL | `localhost:5433` |
+| Stop containers | `docker compose down` |
+| Stop and delete database volume | `docker compose down -v` |
+| Rebuild with fresh base images | `docker compose build --pull --no-cache` |
+| Start after rebuilding | `docker compose up` |
 
-## 💻 Frontend
+Docker Desktop must be open before running Docker commands.
 
-Frontend source code is located in:
+### Seed Users
 
-```txt
-client/
-```
-
-Install dependencies:
-
-```bash
-cd client
-npm install
-```
-
-Start the frontend:
+The project includes a tracked seed script for review.
 
 ```bash
-npm run dev
+./seed.sh
 ```
 
-Frontend URL:
+This reloads 150 fictitious users with different cities, hobbies, preferences, and profile pictures.
 
-```txt
-http://localhost:5173
+| Seed login | Password |
+|---|---|
+| `seed001@matchme.test` | `password123` |
+| `seed002@matchme.test` | `password123` |
+| `seed003@matchme.test` | `password123` |
+
+Use seed users to test recommendations, connection requests, chat, unread badges, typing indicators, online/offline status, and GPS matching.
+
+### Review Data Modes
+
+| Scenario | How to run it | Expected result |
+|---|---|---|
+| Empty system | `docker compose down -v`, then `docker compose up --build`. Do not run `seed.sh`. | App starts with no users. |
+| Single user | Register one user, complete profile and bio. | App works and recommendations can be empty. |
+| Few users | Register 2-3 users manually and complete their profiles and bios. | Good matches appear, poor matches are avoided. |
+| Many users | Run `./seed.sh`. | 150 users are available for a richer review demo. |
+
+### Local Development Without Docker
+
+Use these defaults if running services manually:
+
+| Setting | Value |
+|---|---|
+| Database | `matchme` |
+| User | `matchme_user` |
+| Password | `mp01` |
+| Port | `5433` |
+
+Start PostgreSQL before running the backend locally:
+
+```bash
+docker compose up -d postgres
 ```
 
----
-
-## ☕ Backend
-
-Backend source code is located in:
-
-```txt
-server/
-```
-
-Run the backend server:
+Backend:
 
 ```bash
 cd server
 ./mvnw spring-boot:run
 ```
 
-Backend URL:
+Frontend:
+
+```bash
+cd client
+npm install
+npm run dev
+```
+
+Open:
 
 ```txt
-http://localhost:8080
+http://localhost:5173
 ```
 
----
+### Build Checks
 
-## 🐘 PostgreSQL
-
-Database-related scripts and setup are located in:
-
-```txt
-database/
-```
-
-Create a PostgreSQL database:
-
-```txt
-matchme
-```
-
-Configure database environment variables:
-
-```env
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=matchme
-DB_USER=postgres
-DB_PASSWORD=your_password
-```
+| Area | Command |
+|---|---|
+| Backend tests | `cd server && ./mvnw test` |
+| Frontend build | `cd client && npm run build` |
 
 ---
 
 ## 📘 Usage Guide
 
-### 👤 Create an account
+### Browser Flow
 
-- Register using email and password
-- Log in securely
-- Complete your profile
+| Step | What to do | What to check |
+|---|---|---|
+| 1 | Register and log in. | Auth works and the app opens protected pages. |
+| 2 | Complete `/profile`. | Name, about me, city, and picture save correctly. |
+| 3 | Complete `/bio`. | Hobbies, availability, activity preference, looking-for, distance, and GPS options save correctly. |
+| 4 | Open `/recommendations`. | Up to 10 strongest matches appear. Emails are not shown. |
+| 5 | Dismiss a match. | The user disappears and does not return. |
+| 6 | Send a connection request. | The other user can see it under requests. |
+| 7 | Accept or reject the request. | Accepted users become connections; rejected users do not. |
+| 8 | Open a connected profile. | Profile is visible and chat can start or resume. |
+| 9 | Chat in two browser sessions. | Messages, unread badges, chat ordering, typing, and presence update in real time. |
+| 10 | Load older chat messages. | Chat history is paginated instead of loading everything at once. |
 
-### 🌱 Configure your interests
 
-- Add hobbies and preferences
-- Select your location
-- Define what type of people you want to connect with
+### API Structure
 
-### ✨ Discover matches
-
-- Browse recommended users
-- Dismiss unwanted recommendations
-- Send connection requests
-
-### 🤝 Manage connections
-
-- Accept or reject requests
-- Open connected profiles
-- Disconnect at any time
-
-### 💬 Chat in real time
-
-- Start or resume conversations
-- Receive instant messages
-- See unread message indicators
-
----
-
-## 🔒 Privacy Rules
-
-Profiles are visible only when:
-
-- Users are recommended
-- A connection request exists
-- Users are connected
-
-Private information such as email addresses is never exposed to other users.
-
-Unauthorized profile access returns:
-
-```txt
-HTTP 404
-```
-
----
-
-## ⚡ API Structure
-
-| Endpoint | Description |
+| Endpoint | Returns |
 |---|---|
-| `/users/{id}` | Basic user info |
-| `/users/{id}/profile` | About me / profile information |
-| `/users/{id}/bio` | Interests and recommendation data |
-| `/me` | Current authenticated user |
-| `/recommendations` | Recommendation ids only |
-| `/connections` | Connected user ids only |
+| `POST /api/auth/register` | Creates a user |
+| `POST /api/auth/login` | JWT session token |
+| `POST /api/auth/logout` | Stateless logout endpoint |
+| `GET /api/users/{id}` | `id`, name, profile picture link |
+| `GET /api/users/{id}/profile` | `id`, about me, city |
+| `GET /api/users/{id}/bio` | `id`, biographical data |
+| `GET /api/me` | Shortcut to authenticated user's summary |
+| `GET /api/me/profile` | Shortcut to authenticated user's profile |
+| `GET /api/me/bio` | Shortcut to authenticated user's bio |
+| `GET /api/recommendations` | Maximum 10 recommendation ids only |
+| `POST /api/recommendations/{id}/dismiss` | Dismisses a recommendation |
+| `GET /api/connections` | Connected user ids only |
+| `POST /api/connections/requests/{id}` | Sends a connection request |
+| `GET /api/connections/requests/incoming` | Incoming pending requests |
+| `POST /api/connections/requests/{id}/accept` | Accepts a request |
+| `POST /api/connections/requests/{id}/reject` | Rejects a request |
+| `DELETE /api/connections/{id}` | Disconnects from a user |
+| `GET /api/chats` | Chat list, most recent first |
+| `POST /api/chats/with/{id}` | Starts or resumes a chat |
+| `GET /api/chats/{id}/messages?page=0&size=20` | Paginated chat messages |
+| `POST /api/chats/{id}/messages` | Sends a message |
+| `GET /api/presence/{id}` | Online/offline state |
 
----
+The frontend follows the required over-fetching pattern:
 
-## 💬 Real-Time Features
-
-- Instant chat message delivery
-- Unread message notifications
-- Live chat ordering by recent activity
-- Shared chat history between users
-
-Realtime communication uses:
-
-```txt
-WebSocket + STOMP
-```
-
-without polling.
-
----
-
-## 🧪 Seed Users
-
-The project includes a seed/reload system for testing and review.
-
-Example:
-
-```bash
-./seed.sh
-```
-
-This loads:
-
-```txt
-100+ fictitious users
-```
-
-with different hobbies, preferences, and locations.
-
----
-
-## 📱 Responsive Design
-
-The interface is optimized for:
-
-- Desktop browsers
-- Tablets
-- Mobile devices
+| First fetch | Then fetch details |
+|---|---|
+| `/api/recommendations` | `/api/users/{id}`, `/api/users/{id}/profile`, `/api/users/{id}/bio` |
+| `/api/connections` | `/api/users/{id}`, `/api/users/{id}/profile`, `/api/users/{id}/bio` |
 
 ---
 
@@ -284,10 +236,10 @@ The interface is optimized for:
 
 | Bonus | Description |
 |---|---|
-| 🟢 Online status | Online/offline indicators in profiles and chats |
-| ⌨️ Typing indicator | Live typing feedback during conversations |
-| 📍 GPS radius filtering | Browser geolocation, saved coordinates, and radius-based recommendations without PostGIS |
-| 🧠 Advanced matching | Enhanced recommendation scoring and weighting |
+| 🟢 Online/offline status | Shows whether the other user has an active WebSocket connection. |
+| ⌨️ Typing indicator | Shows typing state in the chat view and clears after the user stops typing. |
+| 📍 GPS radius filtering | Uses browser geolocation, stored coordinates, and the user's max radius. |
+
 ---
 
 ## 🤝 The Matchmakers
@@ -297,23 +249,3 @@ The interface is optimized for:
 | Oluwaseun Olumide Kayode | https://gitea.kood.tech/oluwaseunkayode |
 | Emirs Abdulins | https://gitea.kood.tech/emirabdulin |
 | Jorge Guzman | https://gitea.kood.tech/jorgeguzmanrojas |
-
-### Testing GPS radius locally
-
-Browser GPS can fail on some laptops even when Chrome permission is allowed. For a reliable local demo, use Chrome DevTools:
-
-1. Open `http://localhost:5173/bio`.
-2. Open DevTools with `Cmd + Option + I`.
-3. Go to `More tools -> Sensors`.
-4. Set Location to `Other...`.
-5. Use Tallinn test coordinates:
-   - Latitude: `59.4370`
-   - Longitude: `24.7536`
-   - Timezone ID: `Europe/Tallinn`
-   - Locale: `et-EE`
-6. Click `Use my current location`.
-7. Click `Save bio`.
-
-When GPS is enabled, MatchMe stores the coordinates privately and filters recommendations by the current user's maximum distance. If GPS is disabled, recommendations use the normal city matching fallback.
-
-Recommendation cards show an approximate distance in kilometers when GPS radius matching is active for both users. Exact latitude and longitude are never shown in public profile responses.

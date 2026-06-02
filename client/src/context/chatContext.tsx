@@ -1,117 +1,90 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
-import type { ReactNode } from 'react';
-import { chatService } from '../services/chatServices';
-import { webSocketService } from '../services/websocketService';
+import { useCallback, useState } from "react";
+import type { ReactNode } from "react";
+import { ChatContext } from "./chat-context";
+import { chatService, type Chat, type PresenceSignal, type UnreadSignal } from "../services/chatServices";
+import { webSocketService } from "../services/websocketService";
 
-
-export interface Chat {
-  id: number;
-  
-  companionId: number; 
-  companionName?: string; 
-  companionAvatar?: string;
-  lastMessageContent?: string;
-  lastMessageAt?: string;
-  unreadCount?: number;
+function sortChatsByRecent(chats: Chat[]) {
+  return [...chats].sort((first, second) => {
+    return new Date(second.lastMessageAt).getTime() - new Date(first.lastMessageAt).getTime();
+  });
 }
 
-interface ChatContextType {
-  chats: Chat[];
-  setChats: React.Dispatch<React.SetStateAction<Chat[]>>;
-  isConnected: boolean;
-  loadChats: (token: string) => Promise<void>;
-  connectWebSocket: (token: string, userId: number) => Promise<void>;
-  disconnectWebSocket: () => void;
-  updateChatListWithNewMessage: (chatId: number, content: string, timestamp: string) => void;
-}
-
-
-const ChatContext = createContext<ChatContextType | undefined>(undefined);
-
-
-export const ChatProvider = ({ children }: { children: ReactNode }) => {
+export function ChatProvider({ children }: { children: ReactNode }) {
   const [chats, setChats] = useState<Chat[]>([]);
+  const [onlineUsers, setOnlineUsers] = useState<Record<number, boolean>>({});
   const [isConnected, setIsConnected] = useState(false);
 
-  
-  const loadChats = useCallback(async (token: string) => {
-    try {
-      const data = await chatService.getChats(token);
-      setChats(data);
-    } catch (error) {
-      console.error('Ошибка при загрузке чатов:', error);
-    }
+  const upsertChat = useCallback((nextChat: Chat) => {
+    setChats((currentChats) => {
+      const withoutOld = currentChats.filter((chat) => chat.id !== nextChat.id);
+      return sortChatsByRecent([nextChat, ...withoutOld]);
+    });
   }, []);
 
-  
-  const connectWebSocket = useCallback(async (token: string, userId: number) => {
-    try {
+  const markChatRead = useCallback((chatId: number) => {
+    setChats((currentChats) =>
+      currentChats.map((chat) => (chat.id === chatId ? { ...chat, unreadCount: 0 } : chat)),
+    );
+  }, []);
+
+  const setUserOnline = useCallback((userId: number, online: boolean) => {
+    setOnlineUsers((currentUsers) => ({
+      ...currentUsers,
+      [userId]: online,
+    }));
+  }, []);
+
+  const loadChats = useCallback(async (token: string) => {
+    const loadedChats = await chatService.getChats(token);
+    setChats(sortChatsByRecent(loadedChats));
+  }, []);
+
+  const connectWebSocket = useCallback(
+    async (token: string) => {
       await webSocketService.connect(token);
       setIsConnected(true);
 
-      
-      chatService.subscribeToNotifications(userId, (notification) => {
-        console.log('Получено новое уведомление:', notification);
-        
-        
-        if (notification.type === 'NEW_MESSAGE') {
-          updateChatListWithNewMessage(
-            notification.chatId, 
-            notification.content, 
-            new Date().toISOString()
-          );
-        }
+      chatService.subscribeToChatUpdates((chat) => {
+        upsertChat(chat);
       });
-    } catch (error) {
-      console.error('Не удалось подключиться к WebSocket', error);
-      setIsConnected(false);
-    }
-  }, []);
+
+      chatService.subscribeToUnread((signal: UnreadSignal) => {
+        setChats((currentChats) =>
+          currentChats.map((chat) =>
+            chat.id === signal.chatId ? { ...chat, unreadCount: signal.unreadCount } : chat,
+          ),
+        );
+      });
+
+      chatService.subscribeToPresence((signal: PresenceSignal) => {
+        setUserOnline(signal.userId, signal.online);
+      });
+    },
+    [setUserOnline, upsertChat],
+  );
 
   const disconnectWebSocket = useCallback(() => {
     webSocketService.disconnect();
     setIsConnected(false);
-  }, []);
-
-  
-  const updateChatListWithNewMessage = useCallback((chatId: number, content: string, timestamp: string) => {
-    setChats(prevChats => {
-      const chatIndex = prevChats.findIndex(c => c.id === chatId);
-      if (chatIndex === -1) return prevChats; 
-
-      const updatedChat = { 
-        ...prevChats[chatIndex], 
-        lastMessageContent: content, 
-        lastMessageAt: timestamp,
-        unreadCount: (prevChats[chatIndex].unreadCount || 0) + 1 
-      };
-
-      
-      const filteredChats = prevChats.filter(c => c.id !== chatId);
-      return [updatedChat, ...filteredChats];
-    });
+    setOnlineUsers({});
   }, []);
 
   return (
-    <ChatContext.Provider value={{ 
-      chats, 
-      setChats, 
-      isConnected, 
-      loadChats, 
-      connectWebSocket, 
-      disconnectWebSocket,
-      updateChatListWithNewMessage 
-    }}>
+    <ChatContext.Provider
+      value={{
+        chats,
+        onlineUsers,
+        isConnected,
+        loadChats,
+        connectWebSocket,
+        disconnectWebSocket,
+        upsertChat,
+        markChatRead,
+        setUserOnline,
+      }}
+    >
       {children}
     </ChatContext.Provider>
   );
-};
-
-
-export const useChatContext = () => {
-  const context = useContext(ChatContext);
-  if (context === undefined) {
-    throw new Error('useChatContext должен использоваться внутри ChatProvider');
-  }
-  return context;
-};
+}

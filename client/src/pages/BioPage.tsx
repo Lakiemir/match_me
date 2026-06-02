@@ -19,7 +19,7 @@ type Bio = {
   complete: boolean;
 };
 
-const API_BASE_URL = "http://localhost:8080";
+const API_BASE_URL = "";
 
 const emptyBio: Bio = {
   id: 0,
@@ -66,7 +66,7 @@ export function BioPage() {
   const [isLocating, setIsLocating] = useState(false);
   const [message, setMessage] = useState("");
 
-  const token = localStorage.getItem("token");
+  const token = sessionStorage.getItem("token");
 
   useEffect(() => {
     async function loadBioPage() {
@@ -102,7 +102,7 @@ export function BioPage() {
         });
 
         if (bioResponse.status === 401) {
-          localStorage.removeItem("token");
+          sessionStorage.removeItem("token");
           setMessage("Your login expired. Log in again to save your bio.");
           setIsLoading(false);
           return;
@@ -231,7 +231,7 @@ export function BioPage() {
   async function saveBio(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const currentToken = localStorage.getItem("token");
+    const currentToken = sessionStorage.getItem("token");
 
     if (!currentToken) {
       setMessage("Log in first to save your bio.");
@@ -261,7 +261,7 @@ export function BioPage() {
       });
 
       if (response.status === 401) {
-        localStorage.removeItem("token");
+        sessionStorage.removeItem("token");
         setMessage("Your login expired. Log in again to save your bio.");
         return;
       }

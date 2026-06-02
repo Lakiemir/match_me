@@ -37,7 +37,7 @@ type RecommendationCard = {
   bio: UserBio;
 };
 
-const API_BASE_URL = "http://localhost:8080";
+const API_BASE_URL = "";
 
 export function RecommendationsPage() {
   const [cards, setCards] = useState<RecommendationCard[]>([]);
@@ -69,7 +69,7 @@ export function RecommendationsPage() {
 
   const loadRecommendations = useCallback(async () => {
     // All protected API calls use the JWT saved by the login page.
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
 
     if (!token) {
       setMessage("Log in first to see recommendations.");
@@ -88,7 +88,7 @@ export function RecommendationsPage() {
       });
 
       if (response.status === 401) {
-        localStorage.removeItem("token");
+        sessionStorage.removeItem("token");
         setMessage("Your login expired. Log in again.");
         return;
       }
@@ -130,7 +130,7 @@ export function RecommendationsPage() {
   }, [loadRecommendations]);
 
   async function dismissRecommendation(userId: number) {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
 
     if (!token) {
       setMessage("Log in first to dismiss recommendations.");
@@ -158,7 +158,7 @@ export function RecommendationsPage() {
   }
 
   async function sendConnectionRequest(userId: number) {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
 
     if (!token) {
       setMessage("Log in first to send connection requests.");

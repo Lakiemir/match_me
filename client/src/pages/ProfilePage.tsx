@@ -31,10 +31,64 @@ const emptyProfile: Profile = {
   complete: false,
 };
 
-const API_BASE_URL = "http://localhost:8080";
+const API_BASE_URL = "";
+const MAX_UPLOAD_SIZE_BYTES = 6_000_000;
+const MAX_IMAGE_WIDTH = 700;
+const MAX_IMAGE_HEIGHT = 700;
+const IMAGE_QUALITY = 0.82;
 
 function isProfileComplete(profile: Profile) {
   return Boolean(profile.name.trim() && profile.aboutMe.trim() && profile.city.trim());
+}
+
+function resizeImage(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const imageSource = typeof reader.result === "string" ? reader.result : "";
+
+      if (!imageSource) {
+        reject(new Error("Could not read selected image."));
+        return;
+      }
+
+      image.onload = () => {
+        const scale = Math.min(
+          MAX_IMAGE_WIDTH / image.width,
+          MAX_IMAGE_HEIGHT / image.height,
+          1,
+        );
+
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(image.width * scale);
+        canvas.height = Math.round(image.height * scale);
+
+        const context = canvas.getContext("2d");
+
+        if (!context) {
+          reject(new Error("Could not resize selected image."));
+          return;
+        }
+
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", IMAGE_QUALITY));
+      };
+
+      image.onerror = () => {
+        reject(new Error("Could not load selected image."));
+      };
+
+      image.src = imageSource;
+    };
+
+    reader.onerror = () => {
+      reject(new Error("Could not read selected image."));
+    };
+
+    reader.readAsDataURL(file);
+  });
 }
 
 export function ProfilePage() {
@@ -44,7 +98,7 @@ export function ProfilePage() {
   const [message, setMessage] = useState("");
   const [imageFailed, setImageFailed] = useState(false);
 
-  const token = localStorage.getItem("token");
+  const token = sessionStorage.getItem("token");
 
   useEffect(() => {
     async function loadProfile() {
@@ -109,6 +163,33 @@ export function ProfilePage() {
 
     if (field === "pictureLink") {
       setImageFailed(false);
+    }
+  }
+
+  async function uploadPicture(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      setMessage("Choose an image file.");
+      return;
+    }
+
+    if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+      setMessage("Choose an image smaller than 6 MB.");
+      return;
+    }
+
+    try {
+      const uploadedPicture = await resizeImage(file);
+
+      updateField("pictureLink", uploadedPicture);
+      setMessage("Picture selected. Save profile to keep it.");
+    } catch {
+      setMessage("Could not read selected image.");
     }
   }
 
@@ -265,10 +346,19 @@ export function ProfilePage() {
         <label>
           Profile picture link
           <input
-            value={profile.pictureLink ?? ""}
+            value={profile.pictureLink?.startsWith("data:image/") ? "" : profile.pictureLink ?? ""}
             onChange={(event) => updateField("pictureLink", event.target.value)}
             placeholder="https://example.com/photo.jpg"
             maxLength={2000}
+          />
+        </label>
+
+        <label>
+          Upload profile picture
+          <input
+            type="file"
+            accept="image/*"
+            onChange={uploadPicture}
           />
         </label>
 

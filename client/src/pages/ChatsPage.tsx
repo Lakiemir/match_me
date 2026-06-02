@@ -1,81 +1,81 @@
-import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useChatContext } from '../context/chatContext';
-import type { Chat } from '../context/chatContext';
-// import { useAuth } from '../context/AuthContext'; // Раскомментируй, если у тебя есть такой хук
+import { Link } from "react-router-dom";
+import { useAuth } from "../auth/useAuth";
+import { useChatContext } from "../context/useChatContext";
 
-export const ChatsPage: React.FC = () => {
-  const navigate = useNavigate();
-  const { chats, loadChats } = useChatContext();
-  
-  // TODO: Достань токен авторизации из твоего хранилища/контекста
-  // const { token } = useAuth(); 
-  const token = localStorage.getItem('token') || ''; // Временная заглушка
+function formatChatTime(dateString: string) {
+  return new Date(dateString).toLocaleString([], {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
-  // Загружаем список чатов при открытии страницы
-  useEffect(() => {
+export function ChatsPage() {
+  const { token } = useAuth();
+  const { chats, loadChats, onlineUsers } = useChatContext();
+
+  async function refreshChats() {
     if (token) {
-      loadChats(token);
+      await loadChats(token);
     }
-  }, [token, loadChats]);
-
-  // Функция для форматирования времени (например: "15:30" или "Вчера")
-  const formatTime = (dateString?: string) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
+  }
 
   return (
-    <div className="max-w-3xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">Мои сообщения</h1>
+    <div className="page-stack">
+      <div className="page-title-row">
+        <div>
+          <p className="eyebrow">Chats</p>
+          <h2>Recent chats</h2>
+          <p className="muted-text">Chats are ordered with the most recently active chat first.</p>
+        </div>
+
+        <button className="button button-secondary" type="button" onClick={refreshChats}>
+          Refresh
+        </button>
+      </div>
 
       {chats.length === 0 ? (
-        <div className="text-center text-gray-500 mt-10">
-          <p>У вас пока нет активных диалогов.</p>
-          <p className="text-sm mt-2">Перейдите в профиль пользователя, чтобы начать общение.</p>
-        </div>
+        <section className="empty-state">
+          <h3>No chats yet</h3>
+          <p className="muted-text">Open a connected profile to start a conversation.</p>
+        </section>
       ) : (
-        <div className="flex flex-col space-y-2">
-          {chats.map((chat: Chat) => (
-            <div 
-              key={chat.id}
-              onClick={() => navigate(`/chat/${chat.id}`)}
-              className="flex items-center p-4 bg-white rounded-lg shadow cursor-pointer hover:bg-gray-50 transition-colors"
-            >
-              {/* Аватарка (заглушка, если нет реальной) */}
-              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg mr-4 flex-shrink-0">
-                {chat.companionName ? chat.companionName.charAt(0).toUpperCase() : '?'}
+        <section className="card-list">
+          {chats.map((chat) => (
+            <article className="match-card chat-list-card" key={chat.id}>
+              <div className="avatar">
+                {chat.otherPictureLink ? (
+                  <img src={chat.otherPictureLink} alt={chat.otherName} />
+                ) : (
+                  <span>👤</span>
+                )}
               </div>
 
-              {/* Инфо чата */}
-              <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-baseline mb-1">
-                  <h2 className="text-lg font-semibold truncate text-gray-900">
-                    {chat.companionName || `Пользователь #${chat.companionId}`}
-                  </h2>
-                  <span className="text-xs text-gray-500 whitespace-nowrap ml-2">
-                    {formatTime(chat.lastMessageAt)}
+              <div className="chat-list-main">
+                <div className="chat-list-title">
+                  <h3>{chat.otherName || `User #${chat.otherUserId}`}</h3>
+                  <span className={onlineUsers[chat.otherUserId] ? "status-online" : "status-offline"}>
+                    {onlineUsers[chat.otherUserId] ? "Online" : "Offline"}
                   </span>
                 </div>
-                
-                <p className="text-sm text-gray-600 truncate">
-                  {chat.lastMessageContent || 'Нет сообщений'}
+
+                <p className="muted-text chat-preview">
+                  {chat.lastMessageContent || "No messages yet"}
                 </p>
               </div>
 
-              {/* Индикатор непрочитанных (красная точка/счетчик) */}
-              {chat.unreadCount !== undefined && chat.unreadCount > 0 && (
-                <div className="ml-4 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full flex-shrink-0">
-                  {chat.unreadCount}
-                </div>
-              )}
-            </div>
+              <div className="chat-list-side">
+                <span className="muted-text">{formatChatTime(chat.lastMessageAt)}</span>
+                {chat.unreadCount > 0 && <span className="unread-badge">{chat.unreadCount}</span>}
+                <Link className="button button-secondary" to={`/chats/${chat.id}`}>
+                  Open
+                </Link>
+              </div>
+            </article>
           ))}
-        </div>
+        </section>
       )}
     </div>
   );
-};
-
-export default ChatsPage;
+}

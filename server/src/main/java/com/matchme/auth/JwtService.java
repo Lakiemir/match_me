@@ -1,4 +1,4 @@
-package com.matchme.auth;
+ package com.matchme.auth;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -30,9 +30,9 @@ public class JwtService {
         Instant expiresAt = now.plusMillis(expirationMs);
 
         // Creates a signed JWT that identifies the logged-in user.
+        // The token stores only the user id, not private profile data like email.
         return Jwts.builder()
                 .subject(user.getId().toString())
-                .claim("email", user.getEmail())
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expiresAt))
                 .signWith(secretKey)

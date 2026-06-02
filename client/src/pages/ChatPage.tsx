@@ -1,165 +1,348 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { chatService } from '../services/chatServices';
-import { useChatContext } from '../context/chatContext';
+import { Link, useParams } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useAuth } from "../auth/useAuth";
+import { useChatContext } from "../context/useChatContext";
+import { chatService, type ChatMessage, type TypingSignal } from "../services/chatServices";
 
-// Интерфейс для сообщения (сопоставь с MessageResponse.java на бэкенде)
-export interface Message {
-  id?: number;
-  chatId: number;
-  senderId: number;
-  content: string;
-  createdAt: string;
-  isRead?: boolean;
+const MESSAGE_PAGE_SIZE = 20;
+
+function formatMessageTime(dateString: string) {
+  return new Date(dateString).toLocaleString([], {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
-export const ChatPage: React.FC = () => {
-  const { chatId } = useParams<{ chatId: string }>();
-  const navigate = useNavigate();
-  const { isConnected } = useChatContext();
-  
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [inputValue, setInputValue] = useState('');
+export function ChatPage() {
+  const { chatId } = useParams();
+  const numericChatId = Number(chatId);
+
+  const { token, userId } = useAuth();
+  const { chats, onlineUsers, markChatRead, setUserOnline } = useChatContext();
+
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messageText, setMessageText] = useState("");
+  const [typingUserId, setTypingUserId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  
+  const [isLoadingOlder, setIsLoadingOlder] = useState(false);
+  const [readyChatId, setReadyChatId] = useState<number | null>(null);
+  const [statusMessage, setStatusMessage] = useState("");
+  const [currentPage, setCurrentPage] = useState(0);
+  const [hasOlderMessages, setHasOlderMessages] = useState(false);
+
+  const isChatReady = readyChatId === numericChatId;
+
   // Реф для автоматического скролла вниз при новых сообщениях
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatBoxRef = useRef<HTMLElement | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const shouldScrollToBottomRef = useRef(true);
+  const typingTimeoutRef = useRef<number | null>(null);
+  const stopTypingTimeoutRef = useRef<number | null>(null);
 
-  // TODO: Достань токен и ID текущего пользователя из твоего хранилища
-  const token = localStorage.getItem('token') || '';
-  const myUserId = parseInt(localStorage.getItem('userId') || '1', 10);
+  const currentChat = useMemo(() => {
+    return chats.find((chat) => chat.id === numericChatId);
+  }, [chats, numericChatId]);
 
-  // 1. Загрузка истории сообщений (REST API)
+  const loadHistory = useCallback(async () => {
+    if (!token || !numericChatId) {
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setStatusMessage("");
+
+      // 1. Загрузка первой страницы истории сообщений (REST API)
+      const page = await chatService.getMessages(numericChatId, token, 0, MESSAGE_PAGE_SIZE);
+
+      // Разворачиваем массив, чтобы старые были сверху, новые снизу
+      setMessages([...page.content].reverse());
+      setCurrentPage(page.number);
+      setHasOlderMessages(!page.last);
+      shouldScrollToBottomRef.current = true;
+      markChatRead(numericChatId);
+    } catch {
+      setStatusMessage("Could not load chat history.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [markChatRead, numericChatId, token]);
+
   useEffect(() => {
-    const fetchHistory = async () => {
-      if (!chatId || !token) return;
-      try {
-        setIsLoading(true);
-        // Загружаем первую страницу (20 последних сообщений)
-        const data = await chatService.getMessages(Number(chatId), token, 0, 50);
-        // Предполагаем, что бэкенд возвращает отсортированный массив или Page объект
-        // Если бэкенд возвращает Page<ChatMessage>, то данные будут в data.content
-        const history = data.content ? data.content : data;
-        
-        // Разворачиваем массив, чтобы старые были сверху, новые снизу
-        setMessages(history.reverse()); 
-      } catch (error) {
-        console.error('Ошибка загрузки истории:', error);
-      } finally {
-        setIsLoading(false);
-      }
+    const timeoutId = window.setTimeout(() => {
+      void loadHistory();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
     };
+  }, [loadHistory]);
 
-    fetchHistory();
-  }, [chatId, token]);
-
-  // 2. Подписка на WebSocket для получения новых сообщений в реальном времени
   useEffect(() => {
-    const numericChatId = Number(chatId);
-    
-    if (isConnected && numericChatId) {
-      chatService.subscribeToChat(numericChatId, (newMessage: Message) => {
+    async function loadPresence() {
+      if (!token || !currentChat) {
+        return;
+      }
+
+      try {
+        const presence = await chatService.getPresence(currentChat.otherUserId, token);
+        setUserOnline(presence.userId, presence.online);
+      } catch {
+        // Presence is helpful, but chat can still work without this first state.
+      }
+    }
+
+    void loadPresence();
+  }, [currentChat, setUserOnline, token]);
+
+  useEffect(() => {
+    if (!numericChatId) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function subscribeToCurrentChat() {
+      // 2. Подписка на WebSocket для получения новых сообщений в реальном времени
+      await chatService.subscribeToChat(numericChatId, (newMessage) => {
+        if (cancelled) {
+          return;
+        }
+
         // Добавляем новое сообщение в конец списка
-        setMessages((prev) => [...prev, newMessage]);
+        shouldScrollToBottomRef.current = true;
+
+        setMessages((currentMessages) => {
+          if (currentMessages.some((message) => message.id === newMessage.id)) {
+            return currentMessages;
+          }
+
+          return [...currentMessages, newMessage];
+        });
+
+        markChatRead(numericChatId);
       });
 
-      // Отписываемся при выходе из чата (unmount компонента)
-      return () => {
-        chatService.unsubscribeFromChat(numericChatId);
-      };
-    }
-  }, [isConnected, chatId]);
+      await chatService.subscribeToTyping(numericChatId, (signal: TypingSignal) => {
+        if (cancelled || signal.userId === userId) {
+          return;
+        }
 
-  // 3. Авто-скролл вниз при изменении массива messages
+        setTypingUserId(signal.typing ? signal.userId : null);
+
+        if (typingTimeoutRef.current) {
+          window.clearTimeout(typingTimeoutRef.current);
+        }
+
+        if (signal.typing) {
+          typingTimeoutRef.current = window.setTimeout(() => {
+            setTypingUserId(null);
+          }, 2500);
+        }
+      });
+
+      if (!cancelled) {
+        setReadyChatId(numericChatId);
+      }
+    }
+
+    void subscribeToCurrentChat();
+
+    return () => {
+      cancelled = true;
+
+      // Отписываемся при выходе из чата (unmount компонента)
+      chatService.unsubscribeFromChat(numericChatId);
+      chatService.unsubscribeFromTyping(numericChatId);
+
+      if (typingTimeoutRef.current) {
+        window.clearTimeout(typingTimeoutRef.current);
+      }
+
+      if (stopTypingTimeoutRef.current) {
+        window.clearTimeout(stopTypingTimeoutRef.current);
+      }
+    };
+  }, [markChatRead, numericChatId, userId]);
+
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // 3. Авто-скролл вниз при изменении массива messages
+    if (shouldScrollToBottomRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      shouldScrollToBottomRef.current = false;
+    }
   }, [messages]);
 
+  async function loadOlderMessages() {
+    if (!token || !numericChatId || isLoadingOlder || !hasOlderMessages) {
+      return;
+    }
+
+    setIsLoadingOlder(true);
+    setStatusMessage("");
+
+    try {
+      const nextPageNumber = currentPage + 1;
+      const page = await chatService.getMessages(
+        numericChatId,
+        token,
+        nextPageNumber,
+        MESSAGE_PAGE_SIZE,
+      );
+
+      const olderMessages = [...page.content].reverse();
+
+      setMessages((currentMessages) => {
+        const existingIds = new Set(currentMessages.map((message) => message.id));
+        const newOlderMessages = olderMessages.filter((message) => !existingIds.has(message.id));
+
+        return [...newOlderMessages, ...currentMessages];
+      });
+
+      window.requestAnimationFrame(() => {
+        if (chatBoxRef.current) {
+          chatBoxRef.current.scrollTop = 0;
+        }
+      });
+
+      setCurrentPage(page.number);
+      setHasOlderMessages(!page.last);
+    } catch {
+      setStatusMessage("Could not load older messages.");
+    } finally {
+      setIsLoadingOlder(false);
+    }
+  }
+
+  function handleTyping(nextValue: string) {
+    setMessageText(nextValue);
+
+    if (!numericChatId || !isChatReady) {
+      return;
+    }
+
+    chatService.sendTyping(numericChatId, Boolean(nextValue.trim()));
+
+    if (stopTypingTimeoutRef.current) {
+      window.clearTimeout(stopTypingTimeoutRef.current);
+    }
+
+    stopTypingTimeoutRef.current = window.setTimeout(() => {
+      chatService.sendTyping(numericChatId, false);
+    }, 1200);
+  }
+
   // 4. Отправка сообщения
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inputValue.trim() || !chatId) return;
+  async function handleSendMessage(event: React.FormEvent) {
+    event.preventDefault();
 
-    // Отправляем через WebSocket (он попадет в бэкенд, сохранится в БД и рассылкой вернется нам и собеседнику)
-    chatService.sendMessage(Number(chatId), myUserId, inputValue.trim());
-    
+    const content = messageText.trim();
+
+    if (!content || !numericChatId || !token || !isChatReady) {
+      return;
+    }
+
     // Очищаем поле ввода
-    setInputValue('');
-  };
+    setMessageText("");
 
-  const formatMessageTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
+    try {
+      const savedMessage = await chatService.sendMessageRest(numericChatId, content, token);
+
+      shouldScrollToBottomRef.current = true;
+
+      setMessages((currentMessages) => {
+        if (currentMessages.some((message) => message.id === savedMessage.id)) {
+          return currentMessages;
+        }
+
+        return [...currentMessages, savedMessage];
+      });
+
+      chatService.sendTyping(numericChatId, false);
+      markChatRead(numericChatId);
+    } catch {
+      setStatusMessage("Could not send message.");
+    }
+  }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-100px)] max-w-3xl mx-auto bg-gray-50 rounded-lg shadow-md overflow-hidden">
+    <div className="page-stack chat-page">
       {/* Шапка чата */}
-      <div className="bg-white border-b px-4 py-3 flex items-center shadow-sm">
-        <button 
-          onClick={() => navigate('/chats')}
-          className="mr-4 text-gray-500 hover:text-gray-700"
-        >
-          &larr; Назад
-        </button>
-        <h2 className="text-lg font-semibold">Чат #{chatId}</h2>
+      <div className="page-title-row">
+        <div>
+          <p className="eyebrow">Chat detail</p>
+          <h2>{currentChat?.otherName || `Chat #${chatId}`}</h2>
+          {currentChat && (
+            <p className={onlineUsers[currentChat.otherUserId] ? "status-online" : "status-offline"}>
+              {onlineUsers[currentChat.otherUserId] ? "Online" : "Offline"}
+            </p>
+          )}
+        </div>
+
+        <Link className="button button-secondary" to="/chats">
+          Back to chats
+        </Link>
       </div>
 
+      {statusMessage && <p className="muted-text">{statusMessage}</p>}
+
+      {!isLoading && hasOlderMessages && (
+        <button
+          className="button button-secondary"
+          type="button"
+          onClick={loadOlderMessages}
+          disabled={isLoadingOlder}
+        >
+          {isLoadingOlder ? "Loading older messages..." : "Load older messages"}
+        </button>
+      )}
+
       {/* Зона сообщений */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <section className="chat-box real-chat-box" ref={chatBoxRef}>
         {isLoading ? (
-          <div className="text-center text-gray-400 mt-10">Загрузка сообщений...</div>
+          <p className="muted-text">Loading messages...</p>
         ) : messages.length === 0 ? (
-          <div className="text-center text-gray-400 mt-10">Здесь пока нет сообщений. Напишите первое!</div>
+          <p className="muted-text">No messages yet. Send the first one.</p>
         ) : (
-          messages.map((msg, index) => {
-            const isMine = msg.senderId === myUserId;
+          messages.map((message) => {
+            const isMine = message.senderId === userId;
+
             return (
-              <div 
-                key={msg.id || `temp-${index}`} 
-                className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}
+              <div
+                className={isMine ? "message message-me" : "message message-other"}
+                key={message.id}
               >
-                <div 
-                  className={`max-w-[70%] rounded-2xl px-4 py-2 shadow-sm ${
-                    isMine 
-                      ? 'bg-blue-500 text-white rounded-br-none' 
-                      : 'bg-white text-gray-800 border border-gray-100 rounded-bl-none'
-                  }`}
-                >
-                  <p className="break-words">{msg.content}</p>
-                  <span className={`text-[10px] block mt-1 text-right ${isMine ? 'text-blue-100' : 'text-gray-400'}`}>
-                    {msg.createdAt ? formatMessageTime(msg.createdAt) : '...'}
-                  </span>
-                </div>
+                <p>{message.content}</p>
+                <span>{formatMessageTime(message.createdAt)}</span>
               </div>
             );
           })
         )}
+
+        {typingUserId && <p className="typing-indicator">Typing...</p>}
+
         {/* Невидимый элемент для прокрутки вниз */}
         <div ref={messagesEndRef} />
-      </div>
+      </section>
 
       {/* Поле ввода */}
-      <div className="bg-white border-t p-3">
-        <form onSubmit={handleSendMessage} className="flex gap-2">
-          <input
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Введите сообщение..."
-            className="flex-1 border rounded-full px-4 py-2 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-          />
-          <button 
-            type="submit"
-            disabled={!inputValue.trim()}
-            className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-full px-6 py-2 font-medium transition-colors"
-          >
-            Отправить
-          </button>
-        </form>
-      </div>
+      <form className="chat-input-row" onSubmit={handleSendMessage}>
+        <input
+          value={messageText}
+          onChange={(event) => handleTyping(event.target.value)}
+          placeholder="Write a message..."
+          disabled={!isChatReady}
+        />
+        <button
+          className="button button-primary"
+          type="submit"
+          disabled={!messageText.trim() || !isChatReady}
+        >
+          Send
+        </button>
+      </form>
     </div>
   );
-};
-
-export default ChatPage;
+}
