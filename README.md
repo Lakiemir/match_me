@@ -56,14 +56,14 @@ The backend is a layered Spring Boot application. Features such as auth, profile
 
 ### 👫 Recommendation Logic
 
-Recommendations are intentionally simple and explainable. The backend first removes users who are not valid candidates, then scores the remaining users, sorts the strongest matches first, and returns only their ids.
+Recommendations are intentionally simple. The backend first removes users who are not valid candidates, then scores the remaining users, sorts the strongest matches first, and returns only their ids.
 
 | Step | What happens |
 |---|---|
 | 1 | The current user must have a complete profile and complete bio. |
 | 2 | The candidate must also have a complete profile and complete bio. |
-| 3 | The candidate must be in the same city, unless GPS matching is enabled. |
-| 4 | If GPS is enabled, the candidate must be inside the current user's maximum radius. |
+| 3 | The candidate must be in the same city unless the current user has GPS matching enabled and saved coordinates. |
+| 4 | If GPS matching is active, the candidate must also have saved GPS coordinates and must be inside the current user's maximum radius. |
 | 5 | The candidate must not have been dismissed before. |
 | 6 | The candidate must share at least one hobby with the current user. |
 | 7 | The candidate receives a compatibility score. |
@@ -223,12 +223,6 @@ http://localhost:5173
 | `POST /api/chats/{id}/messages` | Sends a message |
 | `GET /api/presence/{id}` | Online/offline state |
 
-The frontend follows the required over-fetching pattern:
-
-| First fetch | Then fetch details |
-|---|---|
-| `/api/recommendations` | `/api/users/{id}`, `/api/users/{id}/profile`, `/api/users/{id}/bio` |
-| `/api/connections` | `/api/users/{id}`, `/api/users/{id}/profile`, `/api/users/{id}/bio` |
 
 ---
 
