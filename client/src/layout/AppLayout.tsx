@@ -2,8 +2,7 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
 import { useChatContext } from "../context/useChatContext";
 import { navigationItems } from "../data/navigation";
-import { useChatContext } from "../context/chatContext";
-import type { Chat } from "../context/chatContext";
+import type { Chat } from "../services/chatServices";
 
 const API_BASE_URL = "";
 
@@ -11,7 +10,6 @@ export function AppLayout() {
   const { isAuthenticated, logout, token } = useAuth();
   const { chats } = useChatContext();
   const navigate = useNavigate();
-  const { chats } = useChatContext();
   
   const getTotalUnreadCount = (): number => {
     return chats.reduce((sum: number, chat: Chat) => sum + (chat.unreadCount || 0), 0);
