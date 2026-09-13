@@ -98,6 +98,7 @@ Docker Compose runs the full application: PostgreSQL, backend, and frontend.
 | Backend API | `http://localhost:8080` |
 | PostgreSQL | `localhost:5433` |
 | Stop containers | `docker compose down` |
+| Stop containers from an older compose file | `docker compose down --remove-orphans` |
 | Stop and delete database volume | `docker compose down -v` |
 | Rebuild with fresh base images | `docker compose build --pull --no-cache` |
 | Start after rebuilding | `docker compose up` |
