@@ -1,4 +1,4 @@
-# 🎳 MatchMe Hobbies
+# MatchMe Hobbies
 
 ### A full-stack social matching platform built around hobbies, preferences, location, and real-time connections
 
@@ -6,7 +6,7 @@ MatchMe Hobbies helps people discover compatible connections based on shared int
 
 ---
 
-## 🧩 Project Overview
+## Project Overview
 
 MatchMe Hobbies is a monorepo with separate frontend, backend, and database areas:
 
@@ -24,26 +24,26 @@ matchme-web/
 
 The backend is a layered Spring Boot application. Features such as auth, profiles, bio, recommendations, privacy, connections, and chat are kept in focused packages while sharing the same PostgreSQL database and JWT security flow.
 
-### ✨ Features
+###  Features
 
 | | Feature | Description |
 |---|---|---|
-| 🔐 | Secure authentication | Users register and log in with a unique email and password. Passwords are protected with BCrypt and sessions use JWT. |
-| 👤 | User profiles | Users can create and edit their public profile with name, about me, city, and profile picture. |
-| 🌱 | Bio and preferences | Users configure hobbies, availability, activity preference, looking-for, distance, and optional GPS location. |
-| 📍 | Location filtering | Recommendations use city matching by default and GPS radius matching when the user enables browser location. |
-| ✨ | Recommendations | Matches are found with shared hobbies, availability, activity preference, looking-for, and location rules. Strongest matches appear first. |
-| ❌ | Dismiss matches | Dismissed recommendations are saved and are not shown again. |
-| 🤝 | Connections | Users can send connection requests, accept or reject incoming requests, and disconnect later. |
-| 💬 | Real-time chat | Connected users can start or resume one shared chat history. New messages arrive instantly through WebSocket + STOMP. |
-| 🟢 | Presence | Profile and chat views show online/offline status based on active WebSocket connections. |
-| 🔔 | Unread notifications | Unread badges update in real time when messages arrive. |
-| ⌨️ | Typing indicator | Chat shows when the other user is typing and clears after they stop. |
-| 🛡️ | Privacy protection | Profiles are only visible when access is allowed. Private data such as email and password hashes is not exposed. |
-| 📱 | Responsive design | The UI is built to work on desktop, tablet, and mobile browsers. |
-| 🧪 | Seed users | Reviewers can load 150 fictitious users to test matching with realistic data. |
+|| Secure authentication | Users register and log in with a unique email and password. Passwords are protected with BCrypt and sessions use JWT. |
+|| User profiles | Users can create and edit their public profile with name, about me, city, and profile picture. |
+|| Bio and preferences | Users configure hobbies, availability, activity preference, looking-for, distance, and optional GPS location. |
+|| Location filtering | Recommendations use city matching by default and GPS radius matching when the user enables browser location. |
+|| Recommendations | Matches are found with shared hobbies, availability, activity preference, looking-for, and location rules. Strongest matches appear first. |
+|| Dismiss matches | Dismissed recommendations are saved and are not shown again. |
+|| Connections | Users can send connection requests, accept or reject incoming requests, and disconnect later. |
+|| Real-time chat | Connected users can start or resume one shared chat history. New messages arrive instantly through WebSocket + STOMP. |
+|| Presence | Profile and chat views show online/offline status based on active WebSocket connections. |
+|| Unread notifications | Unread badges update in real time when messages arrive. |
+|| Typing indicator | Chat shows when the other user is typing and clears after they stop. |
+|| Privacy protection | Profiles are only visible when access is allowed. Private data such as email and password hashes is not exposed. |
+|| Responsive design | The UI is built to work on desktop, tablet, and mobile browsers. |
+|| Seed users | Reviewers can load 150 fictitious users to test matching with realistic data. |
 
-### 🛠️ Tech Stack
+###  Tech Stack
 
 | Area | Technology |
 |---|---|
@@ -54,7 +54,7 @@ The backend is a layered Spring Boot application. Features such as auth, profile
 | Realtime | WebSocket, STOMP, SockJS |
 | Runtime | Docker Compose |
 
-### 👫 Recommendation Logic
+###  Recommendation Logic
 
 Recommendations are intentionally simple. The backend first removes users who are not valid candidates, then scores the remaining users, sorts the strongest matches first, and returns only their ids.
 
@@ -85,7 +85,7 @@ A recommendation must reach at least `10 points`.
 
 ---
 
-## 🚀 Setup And Installation
+##  Setup And Installation
 
 ### Run The Full App With Docker
 
@@ -179,7 +179,7 @@ http://localhost:5173
 
 ---
 
-## 📘 Usage Guide
+## Usage Guide
 
 ### Browser Flow
 
@@ -227,20 +227,20 @@ http://localhost:5173
 
 ---
 
-## 🚀 Bonus Features
+##  Bonus Features
 
 | Bonus | Description |
 |---|---|
-| 🟢 Online/offline status | Shows whether the other user has an active WebSocket connection. |
-| ⌨️ Typing indicator | Shows typing state in the chat view and clears after the user stops typing. |
-| 📍 GPS radius filtering | Uses browser geolocation, stored coordinates, and the user's max radius. |
+|Online/offline status | Shows whether the other user has an active WebSocket connection. |
+| Typing indicator | Shows typing state in the chat view and clears after the user stops typing. |
+| GPS radius filtering | Uses browser geolocation, stored coordinates, and the user's max radius. |
 
 ---
 
-## 🤝 The Matchmakers
+## The Matchmakers
 
 | Team member | Gitea |
 |---|---|
 | Oluwaseun Olumide Kayode | https://gitea.kood.tech/oluwaseunkayode |
-| Emirs Abdulins | https://gitea.kood.tech/emirabdulin |
+| Emir Abdulin | https://gitea.kood.tech/emirabdulin |
 | Jorge Guzman | https://gitea.kood.tech/jorgeguzmanrojas |
